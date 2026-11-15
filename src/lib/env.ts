@@ -19,16 +19,18 @@ const bool = z
 const schema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   APP_URL: z.string().url().default("http://localhost:3000"),
+  DATABASE_URL: z.string().optional(),
   JWT_SECRET: z.string().min(32),
   ENCRYPTION_KEY: z
     .string()
     .refine((v) => Buffer.from(v, "base64").length === 32, "ENCRYPTION_KEY must be 32 bytes, base64-encoded"),
   CRON_SECRET: z.string().min(12),
-  DATA_BACKEND: z.enum(["firestore", "memory"]),
+  DATA_BACKEND: z.enum(["prisma", "firestore", "memory"]).default("memory"),
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
   GOOGLE_CREDENTIALS: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
-  GEMINI_MODEL: z.string().default("gemini-3-flash-preview"),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+  RESEND_API_KEY: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_USER: z.string().optional(),
@@ -59,7 +61,7 @@ export function env(): Env {
     JWT_SECRET: raw.JWT_SECRET ?? (isProd ? undefined : DEV_JWT_SECRET),
     ENCRYPTION_KEY: raw.ENCRYPTION_KEY ?? (isProd ? undefined : DEV_ENCRYPTION_KEY),
     CRON_SECRET: raw.CRON_SECRET ?? (isProd ? undefined : DEV_CRON_SECRET),
-    DATA_BACKEND: raw.DATA_BACKEND ?? (isProd ? "firestore" : "memory"),
+    DATA_BACKEND: raw.DATA_BACKEND ?? (raw.DATABASE_URL ? "prisma" : (isProd ? "prisma" : "memory")),
     APP_URL: raw.APP_URL || platformUrl(raw),
   });
   if (!parsed.success) {
@@ -77,7 +79,7 @@ export function resetEnvCache(): void {
 
 export const features = {
   ai: () => Boolean(env().GEMINI_API_KEY),
-  email: () => Boolean(env().SMTP_HOST && env().SMTP_USER && env().SMTP_PASS),
+  email: () => Boolean(env().RESEND_API_KEY || (env().SMTP_HOST && env().SMTP_USER && env().SMTP_PASS)),
   tts: () => env().TTS_ENABLED,
   demo: () => env().DEMO_MODE,
 };

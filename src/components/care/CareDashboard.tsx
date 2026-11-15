@@ -102,6 +102,34 @@ export function CareDashboard() {
         }
       />
 
+      {/* Quick Metrics Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-2xs">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Doses Today</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-black text-ink">
+            {taken} <span className="text-sm font-semibold text-muted">/ {data.today.length}</span>
+          </p>
+        </div>
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-2xs">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">7-Day Adherence</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-black text-emerald-600">
+            {a?.week?.percent !== null ? `${a?.week?.percent}%` : "100%"}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-2xs">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Active Streak</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-black text-amber-600">
+            🔥 {data.streak} <span className="text-sm font-semibold text-muted">days</span>
+          </p>
+        </div>
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-2xs">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Refill Alerts</p>
+          <p className={`mt-1 text-2xl sm:text-3xl font-black ${data.refills.length > 0 ? "text-amber-600" : "text-ink"}`}>
+            {data.refills.length > 0 ? `⚠️ ${data.refills.length}` : "0 low"}
+          </p>
+        </div>
+      </div>
+
       {data.failedJobs > 0 ? (
         <Notice tone="danger" title="Some reminders could not be sent">
           {data.failedJobs} email reminder(s) failed after 3 attempts. Check the email settings.

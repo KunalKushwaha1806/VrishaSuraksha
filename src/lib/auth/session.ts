@@ -41,9 +41,11 @@ export async function verifySession(token: string): Promise<SessionClaims | null
 
 export async function startSession(member: Pick<Member, "id" | "circleId" | "role">): Promise<void> {
   const jar = await cookies();
+  const currentEnv = env();
+  const isSecure = currentEnv.NODE_ENV === "production" && !currentEnv.APP_URL.startsWith("http://localhost");
   jar.set(SESSION_COOKIE, await signSession(member), {
     httpOnly: true,
-    secure: env().NODE_ENV === "production",
+    secure: isSecure,
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_TTL_SEC,

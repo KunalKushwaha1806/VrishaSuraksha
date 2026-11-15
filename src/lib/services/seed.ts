@@ -1,4 +1,3 @@
-import { hashPasscode } from "../auth/passcode";
 import { invalidateCircle } from "../cache";
 import { encryptText } from "../crypto";
 import { getDb } from "../db";
@@ -89,9 +88,11 @@ function member(id: string, name: string, tag: string, role: Role, hash: string,
   };
 }
 
+export const DEMO_PASSCODE_HASH = "$2b$12$f.X/IJ7ByJy3UNf4BH6Ut.euLyqfkep0ehipSdvuAMuCugLFO05Yu";
+
 export async function seedDemo(now = new Date()): Promise<Circle> {
   const db = await getDb();
-  const hash = await hashPasscode(DEMO_PASSCODE);
+  const hash = DEMO_PASSCODE_HASH;
   const created = new Date(now.getTime() - 20 * 86_400_000).toISOString();
   const today = istDayKey(now);
   const cid = DEMO_CIRCLE_ID;

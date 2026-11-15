@@ -1,0 +1,261 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passcodeHash String
+  language     String    @default("en") // "en" | "hi"
+  createdAt    DateTime  @default(now())
+  members      Member[]
+
+  @@index([email])
+}
+
+model Circle {
+  id             String         @id @default(cuid())
+  name           String
+  elderId        String
+  inviteCodeHash String?
+  createdAt      DateTime       @default(now())
+  members        Member[]
+  medications    Medication[]
+  appointments   Appointment[]
+  voiceNotes     VoiceNote[]
+  symptomEntries SymptomEntry[]
+  shareTokens    ShareToken[]
+  activityLogs   ActivityLog[]
+  consentLogs    ConsentLog[]
+  reactions      Reaction[]
+  scheduledJobs  ScheduledJob[]
+
+  @@index([elderId])
+}
+
+model Member {
+  id           String        @id @default(cuid())
+  circleId     String
+  userId       String
+  role         String        // ELDER, CARETAKER, FAMILY
+  visibility   Json          // { doses: boolean, missedReasons: boolean, symptoms: boolean, appointments: boolean, stock: boolean }
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  circle       Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voiceNotes   VoiceNote[]
+  refillClaims RefillClaim[]
+  activityLogs ActivityLog[]
+  consentLogs  ConsentLog[]
+  reactions    Reaction[]
+
+  @@unique([circleId, userId])
+  @@index([circleId])
+  @@index([userId])
+}
+
+model Medication {
+  id           String         @id @default(cuid())
+  circleId     String
+  name         String
+  doseText     String
+  form         String
+  criticality  String         @default("normal") // high, normal, low
+  stock        Int            @default(0)
+  unitsPerDose Int            @default(1)
+  notesEnc     String?
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  circle       Circle         @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  schedules    Schedule[]
+  doseEvents   DoseEvent[]
+  voiceNotes   VoiceNote[]
+  refillClaims RefillClaim[]
+  scheduledJobs ScheduledJob[]
+
+  @@index([circleId])
+  @@index([active])
+}
+
+model Schedule {
+  id           String     @id @default(cuid())
+  medicationId String
+  timesOfDay   String[]   // ["08:00", "20:00"]
+  daysOfWeek   Int[]      // [0, 1, 2, 3, 4, 5, 6]
+  startDate    DateTime
+  endDate      DateTime?
+  medication   Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@index([medicationId])
+}
+
+model DoseEvent {
+  id             String         @id @default(cuid())
+  medicationId   String
+  scheduledFor   DateTime
+  status         String         @default("PENDING") // PENDING, TAKEN, SKIPPED, MISSED
+  loggedById     String?
+  loggedAt       DateTime?
+  missedReason   String?        // forgot, unwell, side_effect, ran_out
+  note           String?
+  medication     Medication     @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  symptomEntries SymptomEntry[]
+  scheduledJobs  ScheduledJob[]
+
+  @@index([medicationId])
+  @@index([scheduledFor])
+  @@index([status])
+}
+
+model Appointment {
+  id              String         @id @default(cuid())
+  circleId        String
+  doctor          String
+  place           String
+  startsAt        DateTime
+  notesEnc        String?
+  reminderOffsets Int[]          // e.g. [1440, 120] in minutes
+  createdAt       DateTime       @default(now())
+  circle          Circle         @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  scheduledJobs   ScheduledJob[]
+
+  @@index([circleId])
+  @@index([startsAt])
+}
+
+model VoiceNote {
+  id           String      @id @default(cuid())
+  circleId     String
+  fromMemberId String
+  medicationId String?
+  audioData    Bytes?
+  blobUrl      String?
+  durationSec  Int         @default(0)
+  createdAt    DateTime    @default(now())
+  circle       Circle      @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  fromMember   Member      @relation(fields: [fromMemberId], references: [id], onDelete: Cascade)
+  medication   Medication? @relation(fields: [medicationId], references: [id], onDelete: SetNull)
+
+  @@index([circleId])
+  @@index([fromMemberId])
+  @@index([medicationId])
+}
+
+model ScheduledJob {
+  id            String       @id @default(cuid())
+  circleId      String?
+  doseId        String?
+  appointmentId String?
+  medicationId  String?
+  kind          String       // dose_due, elder_nudge, elder_renudge, caretaker_alert, family_alert, appointment, refill, checkin
+  dueAt         DateTime
+  status        String       @default("pending") // pending, sent, cancelled, failed
+  attempts      Int          @default(0)
+  lastError     String?
+  createdAt     DateTime     @default(now())
+  circle        Circle?      @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  dose          DoseEvent?   @relation(fields: [doseId], references: [id], onDelete: Cascade)
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  medication    Medication?  @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@unique([doseId, kind, dueAt])
+  @@index([status, dueAt])
+  @@index([circleId])
+}
+
+model RefillClaim {
+  id                String     @id @default(cuid())
+  medicationId      String
+  claimedByMemberId String
+  createdAt         DateTime   @default(now())
+  resolvedAt        DateTime?
+  medication        Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  claimedByMember   Member     @relation(fields: [claimedByMemberId], references: [id], onDelete: Cascade)
+
+  @@index([medicationId])
+  @@index([claimedByMemberId])
+}
+
+model SymptomEntry {
+  id                String     @id @default(cuid())
+  circleId          String
+  textEnc           String?
+  createdAt         DateTime   @default(now())
+  linkedDoseEventId String?
+  circle            Circle     @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  linkedDoseEvent   DoseEvent? @relation(fields: [linkedDoseEventId], references: [id], onDelete: SetNull)
+
+  @@index([circleId])
+  @@index([linkedDoseEventId])
+}
+
+model ShareToken {
+  id        String    @id @default(cuid())
+  circleId  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  circle    Circle    @relation(fields: [circleId], references: [id], onDelete: Cascade)
+
+  @@index([circleId])
+  @@index([tokenHash])
+}
+
+model ActivityLog {
+  id             String    @id @default(cuid())
+  circleId       String
+  actorMemberId  String?
+  action         String
+  targetType     String
+  targetId       String?
+  createdAt      DateTime  @default(now())
+  circle         Circle    @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  actorMember    Member?   @relation(fields: [actorMemberId], references: [id], onDelete: SetNull)
+
+  @@index([circleId])
+  @@index([createdAt])
+}
+
+model ConsentLog {
+  id        String   @id @default(cuid())
+  circleId  String
+  memberId  String
+  change    String
+  createdAt DateTime @default(now())
+  circle    Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([circleId])
+  @@index([memberId])
+}
+
+model Reaction {
+  id           String   @id @default(cuid())
+  circleId     String
+  fromMemberId String
+  kind         String   // heart or preset
+  createdAt    DateTime @default(now())
+  circle       Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  fromMember   Member   @relation(fields: [fromMemberId], references: [id], onDelete: Cascade)
+
+  @@index([circleId])
+  @@index([fromMemberId])
+}
+
+model DocumentStore {
+  collection String
+  id         String
+  data       Json
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@id([collection, id])
+  @@index([collection])
+}

@@ -263,6 +263,7 @@ interface JobContext {
   dose: DoseEvent | null;
   med: Medication | null;
   appt: Appointment | null;
+  voiceNotes?: import("../models").VoiceNote[];
 }
 
 async function composeFor(job: Job, ctx: JobContext, member: Member): Promise<EmailContent | null> {
@@ -280,15 +281,20 @@ async function composeFor(job: Job, ctx: JobContext, member: Member): Promise<Em
       if (!dose) return null;
       const time = formatTime(dose.scheduledFor);
       const again = job.kind === "elder_renudge";
+      const vn = ctx.voiceNotes?.find((v) => v.medicationId === dose.medicationId) ?? ctx.voiceNotes?.find((v) => !v.medicationId);
+      const lines = [
+        lang === "hi" ? `समय: ${time}` : `Scheduled for ${time}${med ? ` (${med.doseText})` : ""}.`,
+        lang === "hi" ? "दवा लेने के बाद नीचे दबाइए।" : "Tap the button once you have taken it.",
+      ];
+      if (vn) {
+        lines.push(lang === "hi" ? `🎙️ परिवार का वॉइस मैसेज सुनें: ${appUrl}/v/${vn.id}` : `🎙️ Listen to a family voice reminder: ${appUrl}/v/${vn.id}`);
+      }
       return {
         to: member.email,
         lang,
         subject: lang === "hi" ? `दवा का समय: ${dose.medName}` : `${again ? "Reminder: " : ""}Time for ${dose.medName}`,
         heading: lang === "hi" ? `${d.greeting} ${member.name}, ${dose.medName} लेने का समय है` : `${d.greeting} ${member.name}, it's time for ${dose.medName}`,
-        lines: [
-          lang === "hi" ? `समय: ${time}` : `Scheduled for ${time}${med ? ` (${med.doseText})` : ""}.`,
-          lang === "hi" ? "दवा लेने के बाद नीचे दबाइए।" : "Tap the button once you have taken it.",
-        ],
+        lines,
         action: await doseLink(d.tookIt),
       };
     }
@@ -363,11 +369,12 @@ async function execute(db: Db, job: Job, now: Date): Promise<Outcome> {
   const circle = await db.get<Circle>(C.circles, job.circleId);
   if (!circle) return "cancelled";
 
-  const [dose, med, appt, members] = await Promise.all([
+  const [dose, med, appt, members, voiceNotes] = await Promise.all([
     job.doseId ? db.get<DoseEvent>(C.doses(circle.id), job.doseId) : null,
     job.medicationId ? db.get<Medication>(C.medications(circle.id), job.medicationId) : null,
     job.appointmentId ? db.get<Appointment>(C.appointments(circle.id), job.appointmentId) : null,
     db.query<Member>(C.members(circle.id)),
+    job.doseId ? db.query<import("../models").VoiceNote>(C.voiceNotes(circle.id)) : Promise.resolve([]),
   ]);
 
   if (job.doseId) {
@@ -386,7 +393,7 @@ async function execute(db: Db, job: Job, now: Date): Promise<Outcome> {
   if (job.kind === "appointment" && (!appt || appt.startsAt < now.toISOString())) return "cancelled";
   if (job.kind === "refill" && (!med || !med.active || (await openRefillClaim(db, circle.id, med.id)))) return "cancelled";
 
-  const ctx: JobContext = { circle, elder: members.find((m) => m.id === circle.elderMemberId), dose, med, appt };
+  const ctx: JobContext = { circle, elder: members.find((m) => m.id === circle.elderMemberId), dose, med, appt, voiceNotes };
   const sentTo = [...job.sentTo];
   for (const member of recipients(members, job)) {
     if (sentTo.includes(member.id)) continue;

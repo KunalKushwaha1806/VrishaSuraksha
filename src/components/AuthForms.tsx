@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { api, errorText, fieldErrors } from "@/lib/client/api";
 import { Button, Field, Notice, SelectField } from "./ui";
 
 function useSubmit(path: string) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -20,8 +19,7 @@ function useSubmit(path: string) {
     const data = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
     try {
       const res = await api<{ circleCode?: string }>(path, { body: transform ? transform(data) : data });
-      router.push(res.circleCode ? `/app?welcome=${encodeURIComponent(res.circleCode)}` : "/app");
-      router.refresh();
+      window.location.assign(res.circleCode ? `/app?welcome=${encodeURIComponent(res.circleCode)}` : "/app");
     } catch (err) {
       setError(errorText(err));
       setFields(fieldErrors(err));

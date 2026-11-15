@@ -6,16 +6,20 @@ export type { Db, Tx, QueryOptions, Where } from "./types";
 
 const globalForDb = globalThis as unknown as { __vsDb?: Db };
 
-/** Returns the process-wide database (Firestore in production, memory otherwise). */
+/** Returns the process-wide database (Prisma / PostgreSQL in production, memory otherwise). */
 export async function getDb(): Promise<Db> {
   if (globalForDb.__vsDb) return globalForDb.__vsDb;
-  if (env().DATA_BACKEND === "firestore") {
+  const currentEnv = env();
+
+  if (currentEnv.DATA_BACKEND === "prisma" || (currentEnv.DATABASE_URL && currentEnv.DATA_BACKEND !== "memory")) {
+    const { PrismaDb } = await import("./prisma");
+    globalForDb.__vsDb = new PrismaDb();
+  } else if (currentEnv.DATA_BACKEND === "firestore") {
     const [{ Firestore }, { FirestoreDb }] = await Promise.all([
       import("@google-cloud/firestore"),
       import("./firestore"),
     ]);
     globalForDb.__vsDb = new FirestoreDb(
-      // REST instead of gRPC for one-off calls: much faster cold starts on serverless hosts.
       new Firestore({ ...googleClientOptions(), ignoreUndefinedProperties: true, preferRest: true }),
     );
   } else {

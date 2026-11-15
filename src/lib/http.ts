@@ -2,8 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z, type ZodType } from "zod";
 import { currentAuth, type AuthContext } from "./auth/session";
 import { can, type Permission } from "./domain/permissions";
+import type { Role, Member } from "./models";
 import { errorMessage, log } from "./logger";
 import { hitLimit } from "./ratelimit";
+
+export function requireRole(member: Pick<Member, "role">, ...allowed: Role[]): void {
+  if (!allowed.includes(member.role)) {
+    throw fail.forbidden(`Action requires role: ${allowed.join(", ")}; current role is ${member.role}`);
+  }
+}
+
 
 /** Error with an HTTP status and a stable machine-readable code. */
 export class ApiError extends Error {

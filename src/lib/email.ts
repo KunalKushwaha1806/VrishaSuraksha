@@ -10,15 +10,36 @@ export interface EmailMessage {
 
 export type Mailer = (message: EmailMessage) => Promise<void>;
 
-/** Messages "sent" while no SMTP server is configured (local dev and tests). */
+/** Messages "sent" while no email service is configured (local dev and tests). */
 export const outbox: EmailMessage[] = [];
 
 let override: Mailer | null = null;
+let resendClient: Mailer | null = null;
 let smtp: Mailer | null = null;
 
 /** Test helper: replace the mailer. Pass null to restore the default. */
 export function setMailerForTests(mailer: Mailer | null): void {
   override = mailer;
+}
+
+async function resendMailer(): Promise<Mailer> {
+  if (resendClient) return resendClient;
+  const { Resend } = await import("resend");
+  const e = env();
+  const resend = new Resend(e.RESEND_API_KEY);
+  resendClient = async (m) => {
+    const { error } = await resend.emails.send({
+      from: e.EMAIL_FROM,
+      to: m.to,
+      subject: m.subject,
+      text: m.text,
+      html: m.html,
+    });
+    if (error) {
+      throw new Error(`Resend email error: ${error.name} - ${error.message}`);
+    }
+  };
+  return resendClient;
 }
 
 async function smtpMailer(): Promise<Mailer> {
@@ -43,10 +64,16 @@ const isUndeliverable = (to: string) => /@example\.(com|org|net)$/i.test(to);
 
 export async function sendEmail(message: EmailMessage): Promise<void> {
   if (override) return override(message);
+  const e = env();
   if (!features.email() || isUndeliverable(message.to)) {
     outbox.push(message);
     if (outbox.length > 200) outbox.shift();
-    log.info("Email captured (SMTP not configured or demo address)", { subject: message.subject });
+    log.info("Email captured (Resend/SMTP not configured or demo address)", { subject: message.subject, to: message.to });
+    return;
+  }
+  if (e.RESEND_API_KEY) {
+    const send = await resendMailer();
+    await send(message);
     return;
   }
   const send = await smtpMailer();

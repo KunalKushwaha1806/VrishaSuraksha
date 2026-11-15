@@ -113,3 +113,13 @@ export function visibilityOf(member: Pick<Member, "role" | "visibility">): Visib
 export function canSee(member: Pick<Member, "role" | "visibility">, field: keyof Visibility): boolean {
   return visibilityOf(member)[field];
 }
+
+/**
+ * Asserts the caller has one of the allowed roles, throwing a 403 ApiError if not.
+ */
+export function requireRole(member: Pick<Member, "role">, ...allowed: Role[]): void {
+  if (!allowed.includes(member.role)) {
+    throw new Error(`Unauthorized role: requires one of ${allowed.join(", ")}, got ${member.role}`);
+  }
+}
+

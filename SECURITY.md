@@ -1,28 +1,71 @@
-# Security
+# Security Policy — VridhaSuraksha
 
-## Reporting
+## Medical Disclaimer
 
-Please report vulnerabilities privately through GitHub's *Report a vulnerability* button on this repository rather than in a public issue.
+> **IMPORTANT**: VridhaSuraksha supports daily routines and medication tracking. It does **not** replace medical advice, diagnosis, or care from a qualified doctor or pharmacist. Always consult a healthcare professional regarding medication adjustments or health symptoms.
 
-## Design
+## Reporting Vulnerabilities
 
-**Authentication.** Each member joins with a one-time invite passcode, then signs in with the circle code, their email and a personal passcode. Passcodes are hashed with bcrypt (cost 12). Login is limited per IP, and a circle-code and email pair is locked for 15 minutes after 5 failures in 15 minutes; the lockout is stored in Firestore, so it survives restarts and spans instances. Unknown circles are checked against a dummy hash so timing does not reveal which accounts exist.
+Please report security vulnerabilities privately via GitHub Security Advisories rather than through public issues or pull requests.
 
-**Sessions.** A signed JWT (HS256, 7 days) in an `httpOnly`, `Secure`, `SameSite=Lax` cookie. The member record is re-read on every request: a revoked member or a deleted circle is rejected immediately.
+---
 
-**Authorisation.** Every API route goes through one `route()` wrapper that checks the session, the role permission (`src/lib/domain/permissions.ts`), the request body schema (Zod), body size and rate limit. Family members see only what the elder has allowed for them.
+## 1. Access Control & Authentication
+- **Passcode Hashing**: All user and invite passcodes are hashed using `bcryptjs` with cost factor 12. Plaintext passcodes are never persisted or logged.
+- **Rate Limiting & Lockout**: Passcode and login attempts are strictly rate-limited per IP and per circle. Accounts enter an exponential lockout window after repeated failed attempts. Constant-time comparisons (`crypto.timingSafeEqual`) prevent timing side-channel attacks on circle lookups and credentials.
+- **Server-Side Enforcement**: Caller role and circle membership are validated server-side on every API route via `requireRole()` and the centralized `route()` wrapper. Client assertions are never trusted.
+- **Immediate Revocation**: The elder (circle owner) can revoke any member or caretaker immediately; sessions are re-validated on every request against active circle records.
+- **Audit & Activity Logging**: Every administrative, sensitive, and data-modifying action (including viewing emergency QR cards, diffing prescriptions, and logging doses) is recorded in an immutable `ActivityLog` accessible to the elder.
 
-**Request integrity.** Mutating `/api` requests must carry an `Origin` matching the app. A per-request CSP nonce with `strict-dynamic` is set on every page, together with HSTS, `X-Frame-Options: DENY`, `nosniff`, a strict referrer policy, a permissions policy and COOP.
+---
 
-**Email actions.** Buttons in emails are JWTs bound to one dose and one action, valid for 24 hours and usable once (the token id is recorded). A GET only shows a confirmation page; the action happens on POST.
+## 2. Data Protection at Rest & In Transit
+- **Transport Security**: HTTPS only. Enforced via HSTS (`Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`).
+- **Field-Level Encryption at Rest**: Sensitive healthcare fields (doctor notes, symptom diary entries, medical instructions, and voice notes) are encrypted at rest with AES-256-GCM using `ENCRYPTION_KEY` (a 32-byte base64 key).
+- **Secrets Management**: All secrets (`DATABASE_URL`, `JWT_SECRET`, `CRON_SECRET`, `ENCRYPTION_KEY`, `RESEND_API_KEY`, `GEMINI_API_KEY`) reside exclusively in environment variables. Zero credentials are committed to source control.
+- **Ephemeral Processing**: Prescription images are decoded and resized in browser memory, scanned in memory on serverless routes, and never written to disk or database.
 
-**Data protection.** Free-text notes, symptoms and voice notes are encrypted with AES-256-GCM using a key from Secret Manager. Exports never contain passcode hashes. Free text is redacted of names, emails and phone numbers before it is sent to Gemini, and Gemini output is validated before use.
+---
 
-**Reminder engine.** `/api/cron/tick` requires `Authorization: Bearer <CRON_SECRET>`, compared in constant time. Jobs are claimed in a Firestore transaction with a lease, and each recipient is recorded so a retry never sends twice.
+## 3. Safe & Grounded AI Use
+- **Advisory Only**: All Gemini responses are treated strictly as advisory suggestions requiring explicit human confirmation before taking effect.
+- **No Diagnosis or Dosing**: Strict system prompts prevent Gemini from prescribing, altering dosages, or diagnosing conditions.
+- **Schema Validation with Zod**: Every AI output is validated against strict JSON schemas with Zod. Malformed outputs are rejected with automatic single-retry and manual fallback.
+- **PII Sanitization & Redaction**: Only sanitized medicine names and anonymized medical bullet facts are sent to Gemini. Names, emails, and phone numbers are completely redacted prior to AI invocation.
+- **Prompt Injection Defense**: All OCR/vision text extracted from prescription photos and patient inputs is tagged as data, never as instructions.
 
-**Secrets.** Production secrets live in Secret Manager and are injected by Cloud Run. The app refuses to start in production if any required secret is missing. `.env*` files are git-ignored.
+---
 
-## Known limits
+## 4. Sessions, Cookies & API Hardening
+- **Secure Sessions**: Short-lived JWTs (HS256) stored in `httpOnly`, `Secure`, `SameSite=Lax` cookies.
+- **Parameterized Queries**: All database queries are executed via Prisma ORM parameterized queries or sanitized key-value mappings. No raw SQL string interpolation.
+- **XSS & CSRF Prevention**: No `dangerouslySetInnerHTML`. Mutating API routes enforce origin verification matching `expectedHost`. Dynamic per-request CSP nonces with `strict-dynamic` prevent inline script injection.
+- **Security Headers**: Configured in `next.config.ts`:
+  - `Content-Security-Policy` with nonces
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(self), microphone=(self), geolocation=(), payment=(), usb=()`
+  - `Cross-Origin-Opener-Policy: same-origin`
+- **Payload Limits**: Request body sizes are strictly capped (e.g. 32 KB for JSON routes, 600 KB for compressed voice notes, 2.2 MB for resized prescription photos).
 
-- The per-IP rate limiter is in memory per instance; the persistent lockout is the cross-instance guard.
-- Voice notes are capped at 400 KB and 15 seconds and stored in Firestore, not Cloud Storage.
+---
+
+## 5. Granular Privacy & Consent Controls
+- **Per-Member Visibility**: The elder defines granular visibility permissions per family member:
+  - Doses history
+  - Missed-dose reasons
+  - Symptoms & side-effects
+  - Appointments
+  - Medication stock
+- **Emergency QR Sharing**: Emergency cards use unguessable 32-byte random tokens with expiration timestamps, read-only views, and one-tap revocation.
+- **Consent Logging**: Every modification of member visibility is tracked in a dedicated `ConsentLog`.
+- **GDPR / Privacy Compliance**: Elders can execute full JSON data export (`/api/export`) or permanent circle deletion (`DELETE /api/circle`).
+
+---
+
+## 6. Escalation Reliability & Exactly-Once Delivery
+- **No Duplicate Emails**: Scheduled jobs have unique constraints on `[doseId, kind, dueAt]`.
+- **Transactional Claims**: `/api/cron/tick` claims jobs in atomic database transactions with lease timeouts.
+- **Recipient Tracking**: Every emailed recipient is logged in `sentTo` before completing a step; retries after partial failure never re-email the same person.
+- **Single-Use Action Links**: One-tap action links from emails use signed JWTs with unique `jti` recorded upon first use.

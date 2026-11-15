@@ -1,162 +1,159 @@
 # VridhaSuraksha
 
-**An elder-care and medication platform built around the elder.** The elder, their caretakers and their family share one care circle: they join with a circle code and a one-time invite passcode, then sign in with their own passcode. The app keeps the medicine schedule, records every dose, and sends email when a dose is missed or an appointment is coming up. It escalates calmly, so the elder is reminded first and family are only told if it matters.
+> **Dadaji stays in charge. The family stays in the loop.**
 
-> Built for PromptWars x Catalyst: *Elderly Care & Medication Management Platform*.
-
-**Live demo:** `https://<your-app-url>/demo`. Pick any role; the demo circle is reset on request.
+An elderly care and medication management platform built for the **PromptWars x Catalyst (Google for Developers, Build with AI)** hackathon. VridhaSuraksha creates a shared, passcode-protected ecosystem where an elder, caretakers, and family manage medication schedules, track adherence, monitor doctor appointments, and receive proactive email reminders — keeping the elderly person at the center of their healthcare decisions.
 
 ---
 
-## What it does
+## Medical Disclaimer
 
-| Problem-statement requirement | How VridhaSuraksha answers it |
-|---|---|
-| Shared access for elder, caretakers and family | A **care circle** with a 6-character circle code; each member signs in with circle code, email and their own passcode. Roles: Elder, Caretaker, Family. Invites are single-use; the elder can revoke anyone, and revocation takes effect on the very next request. |
-| Manage medication schedules | Medicines with times, weekdays, dose units, stock and priority. Indian prescription notation (`1-0-1`, `BD`, `TDS`) is understood. **Scan a prescription** with Gemini, review a diff against current medicines, then apply. |
-| Track adherence | A dose record for every scheduled dose: taken, late, missed or skipped. Adherence % per medicine, a 7-day summary and a streak the elder can see. |
-| Doctor appointments | Appointments with reminders the day before and two hours before, plus a **doctor brief**: adherence, missed-dose reasons, symptoms and side effects in one page. Gemini writes an optional plain-language summary. |
-| Proactive email reminders | A Cloud Scheduler tick every minute drives an **escalation ladder** (below). Reminders for upcoming doses, missed doses, refills and appointments. Emails carry signed single-use buttons (“I took it”), so the elder needs no login. |
+> **IMPORTANT**: VridhaSuraksha supports daily routines and medication tracking. It does **not** replace medical advice, diagnosis, or care from a qualified doctor or pharmacist. Always consult a healthcare professional regarding medication adjustments or health symptoms.
 
-### Beyond a reminder app
+---
 
-- **Elder-first screen.** Large type, one big “I took it” button per dose, Hindi or English, read-aloud through Google Cloud Text-to-Speech, and a voice “I took it” option.
-- **Escalation by priority.** For a high-priority medicine: elder at 0 min, again at 10, caretaker at 20, family at 40, marked missed at 60. Normal and low priorities wait longer, and low priority never wakes the family.
-- **Missed-dose triage.** When a dose is missed the elder taps *why*: forgot, felt unwell, side effect, or ran out. “Ran out” sets stock to zero and sends an urgent refill email; “side effect” goes into the doctor brief.
-- **Double-dose guard.** Logging the same medicine again too soon is refused with a clear warning. If the elder confirms, the caretaker is told.
-- **Refill forecast.** Days of stock left are calculated from the schedule. An alert goes out 5 days ahead, and one family member can claim “I'll handle it” so nobody buys twice.
-- **Family voice notes** for the elder, and a simple reaction from the elder back to the family.
-- **Privacy per family member.** The elder chooses which family members see missed-dose reasons, symptoms, appointments or stock.
-- **Emergency card.** A shareable link with medicines, allergies and emergency contacts for a paramedic. Every view of it is logged for the circle.
-- **Explain my medicine** in simple Hindi or English (Gemini), always with a medical disclaimer.
-- **Data export** of the whole circle as JSON.
+## Hard Constraints & Architecture
 
-## Google services used
+- **Deploy Target**: Vercel (Primary) & Render (Fallback). Single repo, zero manual server configuration.
+- **Framework**: Next.js 15+ (App Router) with TypeScript & React 19.
+- **Database**: PostgreSQL on Neon or Supabase via Prisma ORM (`prisma generate && prisma migrate deploy && next build`).
+- **Background Workerless Engine**: Zero long-running workers, zero Redis/BullMQ. Background execution is handled through `GET /api/cron/tick` pinged every minute with `Authorization: Bearer <CRON_SECRET>`.
+- **Pure HTTPS Email**: Resend over HTTPS (Render-friendly; no blocked SMTP ports).
+- **AI Integration**: Google Gemini (`gemini-2.5-flash`) via `@google/genai` called exclusively on server routes (`export const maxDuration = 30`).
+- **Pure-JS**: Pure-JS libraries only (`bcryptjs`, `jose`). No native binary dependencies.
+- **Timezone**: All timestamps stored in UTC and displayed in `Asia/Kolkata` (IST).
+- **PWA**: Installable PWA manifest with offline dose logging that queues in `localStorage` and syncs upon reconnection.
 
-| Service | Use |
-|---|---|
-| **Cloud Run** | Hosts the Next.js app (standalone build, non-root container). Vercel and Render are also supported. |
-| **Firestore** | All data. Transactions guarantee a reminder is sent exactly once. |
-| **Gemini API** (`gemini-3-flash-preview`) | Prescription scanning, medicine explanations, doctor-brief summary. Output is JSON validated with Zod. |
-| **Cloud Text-to-Speech** | Hindi and English read-aloud for the elder. The browser's voice is the fallback. |
-| **Cloud Scheduler** | Calls the reminder engine every minute. |
-| **Secret Manager** | JWT, encryption, cron, Gemini and SMTP secrets. |
-| **Gmail SMTP** | Sends the reminder and alert emails. |
+---
 
-## Architecture
+## Threat Model & Security Controls
 
-```
-Browser (elder / caretaker / family)
-   │  httpOnly session cookie, CSP nonce, same-origin checks
-   ▼
-Cloud Run ── Next.js 15 App Router
-   ├─ src/app/api/*          route() wrapper: auth → RBAC → Zod → rate limit
-   ├─ src/lib/domain/*       pure rules: schedule, escalation, adherence, refill, double dose
-   ├─ src/lib/services/*     doses, medications, care, dashboard, reminder engine
-   ├─ src/lib/ai/*           Gemini + Text-to-Speech, with redaction and fallbacks
-   └─ src/lib/db/*           Db interface → Firestore (prod) | in-memory (dev, tests)
-   ▲
-Cloud Scheduler ── POST /api/cron/tick (Bearer CRON_SECRET)
-                     ├─ create doses for the next 48 h
-                     └─ claim due jobs in a transaction → send email → record recipients
-```
+| Threat | Risk | Mitigation in VridhaSuraksha |
+|---|---|---|
+| **Passcode Brute-Forcing** | Unauthorized circle entry | `bcryptjs` (cost 12), per-IP rate limiting, and an exponential account lockout after 5 failures in 15 minutes. Constant-time checks prevent timing attacks. |
+| **Session Hijacking / CSRF** | Impersonation of caretakers | Signed HS256 JWTs stored in `httpOnly`, `Secure`, `SameSite=Lax` cookies with strict `Origin` verification on mutating routes. |
+| **XSS & Injection** | Malicious script execution | Per-request CSP nonce with `strict-dynamic`; zero `dangerouslySetInnerHTML`; Prisma parameterized queries prevent SQL injection. |
+| **Over-Sharing / Privacy Leak** | Family overreach into private medical notes | Role-Based Access Control (`requireRole()`) and elder-controlled per-member visibility flags (`doses`, `missedReasons`, `symptoms`, `appointments`, `stock`). |
+| **Medical Data Exposure at Rest** | Database breach exposing notes & symptoms | Sensitive fields (medical notes, symptom logs, voice notes) are encrypted at rest with AES-256-GCM using `ENCRYPTION_KEY`. |
+| **Prompt Injection & AI Hallucination** | Malicious text in prescriptions altering dosage | Prescription text is treated as data, never instructions. AI outputs are strictly validated against Zod schemas; diffs require human confirmation before applying. |
+| **Email Scanner Side-Effects** | Antivirus link scanner auto-logging doses | Single-use signed action tokens (`/a/[token]`). GET loads the confirmation page; dose is only logged upon deliberate button press. |
+| **Duplicate Reminder Flooding** | Multiple emails for same dose | Unique constraint on `[doseId, kind, dueAt]` in `ScheduledJob`. Atomic transactional claims and per-member `sentTo` tracking. |
 
-Every time is stored in UTC and shown in India Standard Time.
+Details: [SECURITY.md](file:///c:/Users/Kunal%20Kushwaha/OneDrive/Desktop/Project/VrishaSuraksha/SECURITY.md).
 
-## Security
+---
 
-| Threat | Mitigation |
-|---|---|
-| Passcode guessing | bcrypt (cost 12), per-IP rate limit, and a persistent lockout after 5 failures in 15 minutes. Unknown circles cost the same time as wrong passcodes. |
-| Session theft | httpOnly, Secure, SameSite=Lax JWT cookie; the member is re-checked on every request, so revoking access is immediate. |
-| CSRF | Every mutating API call must carry a matching `Origin`. |
-| XSS | Per-request CSP nonce with `strict-dynamic`; no `dangerouslySetInnerHTML`; email HTML is escaped. |
-| Forwarded reminder emails | Action links are signed, expire in 24 hours, work once, and opening a link changes nothing until the button is pressed. |
-| Health data at rest | Notes, symptoms and voice notes are encrypted with AES-256-GCM. |
-| Data sent to AI | Names, emails and phone numbers are redacted before Gemini sees free text. |
-| Over-sharing within a family | Role-based permissions plus per-member visibility chosen by the elder. |
-| Duplicate or lost reminders | Deterministic job ids, transactional claims with a lease, bounded retries. |
-| Secrets | Secret Manager in production; the app refuses to start without them. |
+## 1-Page Deployment Guide
 
-Details: [SECURITY.md](SECURITY.md).
+### Option 1: Vercel (Primary)
 
-## Run locally
+1. **Create Neon Database**:
+   - Create a free Postgres database at [neon.tech](https://neon.tech).
+   - Copy the connection string (`postgresql://...`). Make sure to use the pooled connection string.
 
-Requires Node.js 22.
+2. **Deploy to Vercel**:
+   - Push this repo to GitHub and import it into [Vercel](https://vercel.com).
+   - In **Project Settings > Environment Variables**, add:
+     ```env
+     DATABASE_URL="postgresql://user:pass@ep-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
+     GEMINI_API_KEY="AIzaSy..."
+     RESEND_API_KEY="re_..."
+     EMAIL_FROM="VridhaSuraksha <onboarding@resend.dev>"
+     JWT_SECRET="<openssl rand -base64 48>"
+     CRON_SECRET="<openssl rand -base64 48>"
+     ENCRYPTION_KEY="<openssl rand -base64 32>"
+     APP_URL="https://your-vercel-domain.vercel.app"
+     DATA_BACKEND="prisma"
+     ```
+   - Click **Deploy**. The build script runs `prisma generate && prisma migrate deploy && next build`.
+
+3. **Configure 1-Minute Cron**:
+   - Go to [cron-job.org](https://cron-job.org) (free).
+   - Create a cron job:
+     - **URL**: `GET https://your-vercel-domain.vercel.app/api/cron/tick`
+     - **Schedule**: Every 1 minute (`* * * * *`)
+     - **Header**: `Authorization: Bearer <YOUR_CRON_SECRET>`
+
+4. **Seed Demo Data**:
+   - Run `npm run seed` locally with `DATABASE_URL` set, or click **Reset demo circle** in `/demo`.
+
+---
+
+### Option 2: Render (Fallback)
+
+1. Connect the repository in Render as a **Web Service**.
+2. **Build Command**: `npm install && npm run build`
+3. **Start Command**: `npm start`
+4. Add the same environment variables. The 1-minute `cron-job.org` pinger keeps Render's free tier continuously awake.
+
+---
+
+## Local Development
 
 ```bash
+# 1. Install dependencies
 npm install
-cp .env.example .env.local   # optional: works with no keys at all
+
+# 2. Configure environment
+cp .env.example .env.local
+# (Optional: Works immediately with zero keys using in-memory mode!)
+
+# 3. Generate Prisma client
+npx prisma generate
+
+# 4. Start local development server
 npm run dev
 ```
 
-Open http://localhost:3000/demo. Without keys, data is kept in memory, emails are printed to the log, and AI features show a manual fallback.
+Visit `http://localhost:3000/demo` to log in as Dadaji, Caretaker Sunita, or Family Members Arjun / Riya.
 
+### Running Tests & Quality Checks
 ```bash
-npm test          # 72 unit and integration tests (Vitest)
-npm run lint      # ESLint incl. jsx-a11y strict
-npm run typecheck
-npm run build
+npm test            # 82 unit and integration tests (Vitest)
+npm run lint        # ESLint check
+npm run typecheck   # TypeScript check
+npm run build       # Next.js production build test
 ```
 
-## Deploy to Cloud Run
+---
 
-You need the [gcloud CLI](https://cloud.google.com/sdk/docs/install), a Google Cloud project with billing, a [Gemini API key](https://aistudio.google.com/apikey) and a [Gmail App Password](https://myaccount.google.com/apppasswords).
+## End-to-End Demo Script Walkthrough
 
-```bash
-gcloud auth login
-export PROJECT_ID=your-project REGION=asia-south1
-export GEMINI_API_KEY=... SMTP_USER=you@gmail.com SMTP_PASS=your-app-password
-export DEMO_INBOX=you@gmail.com   # demo emails arrive as you+caretaker@gmail.com etc.
-bash scripts/deploy.sh
-```
+Follow this scripted flow to demonstrate VridhaSuraksha:
 
-The script enables the APIs, creates Firestore with its indexes, a least-privilege service account, the secrets, the Cloud Run service and the Cloud Scheduler job. It is safe to re-run.
+1. **Prescription Change Detector**:
+   - Log in as **Caretaker (Sunita)** at `/demo`.
+   - Go to **Scan Prescription** (`/app/scan`).
+   - Upload a prescription photo. Gemini Vision extracts the medicines and code calculates the diff against stored schedules (e.g. *Added*, *Changed*, *Stopped*).
+   - Review and confirm to apply.
 
-## Host on Vercel or Render
+2. **Elder Voice-First Screen & AI Explainer**:
+   - Switch to **Elder (Dadaji)** at `/app`.
+   - Dadaji's high-contrast, large-button interface displays the next pending dose.
+   - Tap **"What is this medicine for?"** (`/api/explain`). Gemini delivers a plain-language explanation in Hindi or English, and browser SpeechSynthesis speaks it aloud.
+   - Always concludes with: *"Please confirm with your doctor or pharmacist."*
 
-Both use the same Firestore database through Firebase's free Spark plan, which needs no card.
+3. **Family Voice Reminder & Voice Logging**:
+   - A grandchild's voice note plays when Dadaji's dose is due.
+   - Tap the microphone button and say *"Maine le li"* (or *"I took it"*).
+   - Dose is instantly marked `TAKEN`.
 
-**1. Firestore (Firebase console)**
-1. At [console.firebase.google.com](https://console.firebase.google.com), create a project and open **Build → Firestore Database → Create database** (production mode, region `asia-south1`).
-2. Under **Indexes → Composite → Create index**, add two indexes on collection `jobs`: `status` ↑ + `dueAt` ↑, and `status` ↑ + `leaseUntil` ↑.
-3. Under **Project settings → Service accounts → Generate new private key**, download the JSON key. Keep it out of the repo; it goes into `GOOGLE_CREDENTIALS`.
+4. **Missed-Dose Triage & Refill Claiming**:
+   - Dadaji taps **"Missed"** and selects **"Ran out"** (`ran_out`).
+   - Stock drops to zero and an urgent refill notification is triggered.
+   - Log in as **Family (Arjun)** at `/app`.
+   - Tap **"I'll handle it"** on the refill banner. All family members see that Arjun has claimed it.
 
-**2. Environment variables**
+5. **Streaks, Not Guilt & Heart Reactions**:
+   - The Family dashboard displays Dadaji's active day streak (computed purely from dose logs).
+   - Family taps the **Heart** button to send love without nagging.
 
-| Variable | Value |
-|---|---|
-| `DATA_BACKEND` | `firestore` |
-| `GOOGLE_CREDENTIALS` | the whole service-account JSON |
-| `ENCRYPTION_KEY` | `openssl rand -base64 32`, **the same on every host** |
-| `JWT_SECRET` | `openssl rand -base64 48` |
-| `CRON_SECRET` | `openssl rand -hex 32` |
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | your key, `gemini-3-flash-preview` |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | Gmail App Password settings (Vercel only, see below) |
-| `DEMO_MODE`, `DEMO_INBOX` | `true`, your Gmail address |
+6. **Privacy Controls & Activity Logging**:
+   - Log in as Dadaji, open **Circle Settings** (`/app/settings`).
+   - Change permissions for a family member (hide missed reasons).
+   - Check the **Activity Log** (`/app/activity`) to see real-time consent changes and audit history.
 
-`APP_URL` is optional: the app reads the address Vercel or Render publishes.
-
-**3. Deploy**
-- **Vercel:** *Add New → Project*, import the repo, paste the variables, deploy. No other settings are needed.
-- **Render:** *New → Blueprint*, pick the repo. [`render.yaml`](render.yaml) builds the Dockerfile on the free plan and asks for the secret values.
-
-**4. Reminders.** Free plans on both hosts cannot run a job every minute, so use [cron-job.org](https://cron-job.org) (free):
-- URL `https://<your-vercel-app>/api/cron/tick`, every minute, method POST, header `Authorization: Bearer <CRON_SECRET>`.
-- Optional: a second job calling `https://<your-render-app>/api/health` every 10 minutes keeps the free Render instance from sleeping.
-
-Render's free plan blocks outgoing email ports, so let Vercel run the reminder engine and send email. Both hosts share the database, and jobs are claimed in transactions, so a reminder is never sent twice. Cloud Text-to-Speech needs Google Cloud billing; without it the elder's phone voice is used.
-
-## Project layout
-
-```
-src/app/            pages and API routes
-src/components/     UI (elder, care, family, shared)
-src/lib/            domain rules, services, auth, AI, database
-tests/              Vitest suites
-scripts/deploy.sh   one-command Cloud Run deployment
-```
-
-## Medical disclaimer
-
-VridhaSuraksha helps families keep track of medicines. It does not give medical advice, diagnose or replace a doctor or pharmacist. AI explanations and prescription scans can be wrong and must be checked against the prescription. In an emergency call **112**.
+7. **Pre-Appointment Doctor Brief**:
+   - Navigate to `/app/brief`.
+   - View the generated one-page doctor brief consolidating 7-day adherence %, missed doses, reported symptoms, and doctor notes.
+   - Tap **Print Brief** for a doctor consultation.
