@@ -1,4 +1,4 @@
-import { env } from "../env";
+import { env, googleClientOptions } from "../env";
 import { MemoryDb } from "./memory";
 import type { Db } from "./types";
 
@@ -15,7 +15,8 @@ export async function getDb(): Promise<Db> {
       import("./firestore"),
     ]);
     globalForDb.__vsDb = new FirestoreDb(
-      new Firestore({ projectId: env().GOOGLE_CLOUD_PROJECT, ignoreUndefinedProperties: true }),
+      // REST instead of gRPC for one-off calls: much faster cold starts on serverless hosts.
+      new Firestore({ ...googleClientOptions(), ignoreUndefinedProperties: true, preferRest: true }),
     );
   } else {
     globalForDb.__vsDb = new MemoryDb();

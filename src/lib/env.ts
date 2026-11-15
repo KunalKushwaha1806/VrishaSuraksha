@@ -26,6 +26,7 @@ const schema = z.object({
   CRON_SECRET: z.string().min(12),
   DATA_BACKEND: z.enum(["firestore", "memory"]),
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
+  GOOGLE_CREDENTIALS: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default("gemini-3-flash-preview"),
   SMTP_HOST: z.string().optional(),
@@ -41,6 +42,13 @@ const schema = z.object({
 
 export type Env = z.infer<typeof schema>;
 
+/** Render and Vercel publish the app's public address, so APP_URL can be left unset there. */
+function platformUrl(raw: NodeJS.ProcessEnv): string | undefined {
+  if (raw.RENDER_EXTERNAL_URL) return raw.RENDER_EXTERNAL_URL;
+  if (raw.VERCEL_PROJECT_PRODUCTION_URL) return `https://${raw.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return undefined;
+}
+
 let cached: Env | null = null;
 
 export function env(): Env {
@@ -52,6 +60,7 @@ export function env(): Env {
     ENCRYPTION_KEY: raw.ENCRYPTION_KEY ?? (isProd ? undefined : DEV_ENCRYPTION_KEY),
     CRON_SECRET: raw.CRON_SECRET ?? (isProd ? undefined : DEV_CRON_SECRET),
     DATA_BACKEND: raw.DATA_BACKEND ?? (isProd ? "firestore" : "memory"),
+    APP_URL: raw.APP_URL || platformUrl(raw),
   });
   if (!parsed.success) {
     const fields = parsed.error.issues.map((i) => i.path.join(".")).join(", ");
@@ -72,3 +81,34 @@ export const features = {
   tts: () => env().TTS_ENABLED,
   demo: () => env().DEMO_MODE,
 };
+
+export interface GoogleClientOptions {
+  projectId?: string;
+  credentials?: { client_email: string; private_key: string };
+}
+
+/**
+ * Options for Google Cloud clients (Firestore, Text-to-Speech).
+ * On Cloud Run the service account is picked up automatically and this is
+ * just the project id. On Vercel or Render, GOOGLE_CREDENTIALS holds a
+ * service-account key as JSON or base64-encoded JSON.
+ */
+export function googleClientOptions(): GoogleClientOptions {
+  const { GOOGLE_CREDENTIALS: raw, GOOGLE_CLOUD_PROJECT: project } = env();
+  if (!raw) return { projectId: project };
+  const text = raw.trim().startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");
+  let key: { project_id?: string; client_email?: string; private_key?: string };
+  try {
+    key = JSON.parse(text);
+  } catch {
+    throw new Error("GOOGLE_CREDENTIALS is not valid service-account JSON");
+  }
+  if (!key.client_email || !key.private_key) {
+    throw new Error("GOOGLE_CREDENTIALS must contain client_email and private_key");
+  }
+  return {
+    projectId: project ?? key.project_id,
+    // Dashboards sometimes keep the key's line breaks as a literal backslash-n.
+    credentials: { client_email: key.client_email, private_key: key.private_key.replace(/\\n/g, "\n") },
+  };
+}

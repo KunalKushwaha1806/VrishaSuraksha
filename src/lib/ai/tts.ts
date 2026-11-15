@@ -1,5 +1,5 @@
 import type { TextToSpeechClient } from "@google-cloud/text-to-speech";
-import { features } from "../env";
+import { features, googleClientOptions } from "../env";
 import { fail } from "../http";
 
 /**
@@ -13,7 +13,7 @@ export async function synthesize(text: string, language: "en" | "hi"): Promise<B
   if (!features.tts()) throw fail.unavailable("Server voice is off; using the phone's voice instead.");
   if (!client) {
     const { TextToSpeechClient } = await import("@google-cloud/text-to-speech");
-    client = new TextToSpeechClient();
+    client = new TextToSpeechClient({ ...googleClientOptions() });
   }
   const [response] = await client.synthesizeSpeech({
     input: { text: text.slice(0, 1000) },

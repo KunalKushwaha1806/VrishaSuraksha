@@ -43,3 +43,7 @@ next-env.d.ts
 
 # Local dev-only Claude Code skills (not part of the submission)
 .claude/skills/
+
+# Google service-account keys (paste into the host dashboard instead)
+*firebase-adminsdk*.json
+service-account*.json
