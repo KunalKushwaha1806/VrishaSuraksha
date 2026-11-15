@@ -19,7 +19,7 @@ An elderly care and medication management platform built for the **PromptWars x 
 - **Database**: PostgreSQL on Neon or Supabase via Prisma ORM (`prisma generate && prisma migrate deploy && next build`).
 - **Background Workerless Engine**: Zero long-running workers, zero Redis/BullMQ. Background execution is handled through `GET /api/cron/tick` pinged every minute with `Authorization: Bearer <CRON_SECRET>`.
 - **Pure HTTPS Email**: Resend over HTTPS (Render-friendly; no blocked SMTP ports).
-- **AI Integration**: Google Gemini (`gemini-2.5-flash`) via `@google/genai` called exclusively on server routes (`export const maxDuration = 30`).
+- **AI Integration**: Google Gemini (`gemini-3-flash-preview`) via `@google/genai` called exclusively on server routes (`export const maxDuration = 30`).
 - **Pure-JS**: Pure-JS libraries only (`bcryptjs`, `jose`). No native binary dependencies.
 - **Timezone**: All timestamps stored in UTC and displayed in `Asia/Kolkata` (IST).
 - **PWA**: Installable PWA manifest with offline dose logging that queues in `localStorage` and syncs upon reconnection.
@@ -82,7 +82,7 @@ Details: [SECURITY.md](file:///c:/Users/Kunal%20Kushwaha/OneDrive/Desktop/Projec
 ### Option 2: Render (Fallback)
 
 1. Connect the repository in Render as a **Web Service**.
-2. **Build Command**: `npm install && npm run build`
+2. **Build Command**: `npm install --include=dev && npm run build`
 3. **Start Command**: `npm start`
 4. Add the same environment variables. The 1-minute `cron-job.org` pinger keeps Render's free tier continuously awake.
 
