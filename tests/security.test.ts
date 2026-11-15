@@ -96,7 +96,8 @@ describe("emergency share links", () => {
   it("resolves only while active", async () => {
     const { token, share } = await createShareToken(h.circle, h.elder, 24);
     expect((await resolveShareToken(token))?.circle.id).toBe("c1");
-    expect(await resolveShareToken(`${token.slice(0, -1)}A`)).toBeNull();
+    const tampered = `${token.slice(0, -1)}${token.endsWith("A") ? "B" : "A"}`;
+    expect(await resolveShareToken(tampered)).toBeNull();
     await revokeShareToken(h.circle.id, h.elder, share.id);
     expect(await resolveShareToken(token)).toBeNull();
   });
