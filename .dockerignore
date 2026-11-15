@@ -1,0 +1,14 @@
+node_modules
+.next
+coverage
+.git
+.github
+.claude
+.env*
+!.env.example
+*.log
+tests
+Dockerfile
+README.md
+SECURITY.md
+docs
