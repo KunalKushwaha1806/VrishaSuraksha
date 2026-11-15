@@ -26,7 +26,9 @@ const VIS_LABELS: Array<{ key: keyof Visibility; label: string }> = [
 const ROLE_LABEL: Record<Role, string> = { ELDER: "Elder (owner)", CARETAKER: "Caretaker", FAMILY: "Family" };
 
 function InvitePanel({ canInviteCaretaker }: { canInviteCaretaker: boolean }) {
-  const [invite, setInvite] = useState<{ code: string; circleCode: string; expiresAt: string; role: string } | null>(null);
+  const [invite, setInvite] = useState<{ code: string; circleCode: string; expiresAt: string; role: string } | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -34,7 +36,9 @@ function InvitePanel({ canInviteCaretaker }: { canInviteCaretaker: boolean }) {
     setBusy(true);
     setError(null);
     try {
-      const res = await api<{ code: string; circleCode: string; expiresAt: string }>("/api/invites", { body: { role } });
+      const res = await api<{ code: string; circleCode: string; expiresAt: string }>("/api/invites", {
+        body: { role },
+      });
       setInvite({ ...res, role });
     } catch (err) {
       setError(errorText(err));
@@ -57,7 +61,11 @@ function InvitePanel({ canInviteCaretaker }: { canInviteCaretaker: boolean }) {
           </Button>
         ) : null}
       </div>
-      {error ? <div className="mt-3"><Notice tone="danger">{error}</Notice></div> : null}
+      {error ? (
+        <div className="mt-3">
+          <Notice tone="danger">{error}</Notice>
+        </div>
+      ) : null}
       {invite ? (
         <div className="mt-4" aria-live="polite">
           <Notice tone="ok" title={`Invite for a ${invite.role.toLowerCase()} created`}>
@@ -67,7 +75,10 @@ function InvitePanel({ canInviteCaretaker }: { canInviteCaretaker: boolean }) {
             <p>
               Invite passcode: <strong className="font-mono text-xl">{invite.code}</strong>
             </p>
-            <p className="text-sm">Share both in person or by phone. This passcode is shown only once. Expires {formatDateTime(invite.expiresAt)}.</p>
+            <p className="text-sm">
+              Share both in person or by phone. This passcode is shown only once. Expires{" "}
+              {formatDateTime(invite.expiresAt)}.
+            </p>
           </Notice>
         </div>
       ) : null}
@@ -116,7 +127,11 @@ function VisibilityEditor({ member, onSaved }: { member: MemberView; onSaved: ()
           {busy ? "Saving…" : "Save sharing settings"}
         </Button>
       ) : null}
-      {msg ? <div className="mt-2"><Notice tone={msg.tone}>{msg.text}</Notice></div> : null}
+      {msg ? (
+        <div className="mt-2">
+          <Notice tone={msg.tone}>{msg.text}</Notice>
+        </div>
+      ) : null}
     </fieldset>
   );
 }
@@ -158,7 +173,11 @@ export function MembersManager({ myRole, myId }: { myRole: Role; myId: string })
     <div className="space-y-6">
       <PageHeader
         title={isElder ? "Who can see what" : "Care circle"}
-        subtitle={isElder ? "You decide what each family member can see. Caretakers need full access to manage care." : "Members of this care circle."}
+        subtitle={
+          isElder
+            ? "You decide what each family member can see. Caretakers need full access to manage care."
+            : "Members of this care circle."
+        }
       />
       {notice ? <Notice tone="ok">{notice}</Notice> : null}
       {myRole !== "FAMILY" ? <InvitePanel canInviteCaretaker={myRole === "ELDER" || myRole === "CARETAKER"} /> : null}
@@ -182,7 +201,9 @@ export function MembersManager({ myRole, myId }: { myRole: Role; myId: string })
                   ) : null}
                 </div>
               </div>
-              {isElder && m.active && m.role === "FAMILY" && m.visibility ? <VisibilityEditor member={m} onSaved={load} /> : null}
+              {isElder && m.active && m.role === "FAMILY" && m.visibility ? (
+                <VisibilityEditor member={m} onSaved={load} />
+              ) : null}
             </Card>
           </li>
         ))}

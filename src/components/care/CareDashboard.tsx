@@ -41,7 +41,11 @@ function LogOnBehalf({ dose, onDone }: { dose: Dose; onDone: () => void }) {
 
   if (!open) {
     return (
-      <Button variant="secondary" onClick={() => setOpen(true)} aria-label={`Log ${dose.medName} at ${formatTime(dose.scheduledFor)}`}>
+      <Button
+        variant="secondary"
+        onClick={() => setOpen(true)}
+        aria-label={`Log ${dose.medName} at ${formatTime(dose.scheduledFor)}`}
+      >
         Log
       </Button>
     );
@@ -124,7 +128,9 @@ export function CareDashboard() {
         </div>
         <div className="rounded-2xl border border-line bg-surface p-4 shadow-2xs">
           <p className="text-xs font-bold uppercase tracking-wider text-muted">Refill Alerts</p>
-          <p className={`mt-1 text-2xl sm:text-3xl font-black ${data.refills.length > 0 ? "text-amber-600" : "text-ink"}`}>
+          <p
+            className={`mt-1 text-2xl sm:text-3xl font-black ${data.refills.length > 0 ? "text-amber-600" : "text-ink"}`}
+          >
             {data.refills.length > 0 ? `⚠️ ${data.refills.length}` : "0 low"}
           </p>
         </div>
@@ -166,7 +172,8 @@ export function CareDashboard() {
               {data.refills.map((r) => (
                 <li key={r.medicationId} className="flex flex-wrap items-center justify-between gap-2">
                   <span>
-                    <strong>{r.name}</strong> · {r.stock === 0 ? "run out" : `${r.stock} left (${r.daysLeft} day${r.daysLeft === 1 ? "" : "s"})`}
+                    <strong>{r.name}</strong> ·{" "}
+                    {r.stock === 0 ? "run out" : `${r.stock} left (${r.daysLeft} day${r.daysLeft === 1 ? "" : "s"})`}
                   </span>
                   <ClaimRefillButton medicationId={r.medicationId} claimedByName={r.claimedByName} onDone={refresh} />
                 </li>
@@ -187,14 +194,18 @@ export function CareDashboard() {
             </p>
           </div>
           {data.today.length === 0 ? (
-            <EmptyState title="No doses scheduled today" action={<LinkButton href="/app/medicines?new=1">Add a medicine</LinkButton>} />
+            <EmptyState
+              title="No doses scheduled today"
+              action={<LinkButton href="/app/medicines?new=1">Add a medicine</LinkButton>}
+            />
           ) : (
             <ul className="mt-4 divide-y divide-line">
               {data.today.map((d) => (
                 <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div>
                     <p className="font-semibold">
-                      {formatTime(d.scheduledFor)} · {d.medName} <span className="font-normal text-muted">{d.doseText}</span>
+                      {formatTime(d.scheduledFor)} · {d.medName}{" "}
+                      <span className="font-normal text-muted">{d.doseText}</span>
                     </p>
                     {d.loggedByName ? <p className="text-sm text-muted">Logged by {d.loggedByName}</p> : null}
                   </div>
@@ -219,7 +230,8 @@ export function CareDashboard() {
             <PercentBar label="Last 7 days" percent={a.week.percent} />
             <PercentBar label="Last 30 days" percent={a.month.percent} />
             <p className="text-sm text-muted">
-              Streak: {data.streak} day(s). Skipped doses are the elder&apos;s informed choice and don&apos;t count against them.
+              Streak: {data.streak} day(s). Skipped doses are the elder&apos;s informed choice and don&apos;t count
+              against them.
             </p>
           </Card>
           <Card className="space-y-3">
@@ -250,7 +262,10 @@ export function CareDashboard() {
                   <span>
                     <strong>{v.doctor}</strong> · {formatDateTime(v.startsAt)} · {v.place}
                   </span>
-                  <Link className="font-semibold text-brand underline" href={`/app/brief?appointment=${encodeURIComponent(v.id)}`}>
+                  <Link
+                    className="font-semibold text-brand underline"
+                    href={`/app/brief?appointment=${encodeURIComponent(v.id)}`}
+                  >
                     Doctor brief
                   </Link>
                 </li>

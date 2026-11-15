@@ -22,7 +22,12 @@ async function resizeImage(file: File): Promise<{ base64: string; mimeType: "ima
 }
 
 const KIND_TONE = { added: "ok", changed: "warn", stopped: "danger", unchanged: "info" } as const;
-const KIND_LABEL = { added: "New", changed: "Changed", stopped: "Not on this prescription", unchanged: "No change" } as const;
+const KIND_LABEL = {
+  added: "New",
+  changed: "Changed",
+  stopped: "Not on this prescription",
+  unchanged: "No change",
+} as const;
 
 interface Row {
   item: DiffItem;
@@ -43,7 +48,9 @@ export function PrescriptionScanner() {
     setState("reading");
     try {
       const { base64, mimeType } = await resizeImage(file);
-      const res = await api<{ diff: DiffItem[] }>("/api/prescriptions/scan", { body: { imageBase64: base64, mimeType } });
+      const res = await api<{ diff: DiffItem[] }>("/api/prescriptions/scan", {
+        body: { imageBase64: base64, mimeType },
+      });
       setRows(
         res.diff.map((item) => ({
           item,
@@ -67,11 +74,22 @@ export function PrescriptionScanner() {
     setError(null);
     try {
       const items = chosen.map((r) => {
-        const times = r.times.split(",").map((t) => t.trim()).filter(Boolean);
+        const times = r.times
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
         if (r.item.kind === "added") {
-          return { kind: "added", name: r.item.name, doseText: r.doseText || "As prescribed", times, durationDays: r.item.after?.durationDays ?? null, stock: 0 };
+          return {
+            kind: "added",
+            name: r.item.name,
+            doseText: r.doseText || "As prescribed",
+            times,
+            durationDays: r.item.after?.durationDays ?? null,
+            stock: 0,
+          };
         }
-        if (r.item.kind === "changed") return { kind: "changed", medicationId: r.item.medicationId, doseText: r.doseText, times };
+        if (r.item.kind === "changed")
+          return { kind: "changed", medicationId: r.item.medicationId, doseText: r.doseText, times };
         return { kind: "stopped", medicationId: r.item.medicationId };
       });
       const res = await api<{ applied: number }>("/api/prescriptions/apply", { body: { items } });
@@ -83,7 +101,8 @@ export function PrescriptionScanner() {
     }
   }
 
-  const update = (i: number, patch: Partial<Row>) => setRows((prev) => prev.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const update = (i: number, patch: Partial<Row>) =>
+    setRows((prev) => prev.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
   return (
     <div className="space-y-6">
@@ -119,7 +138,9 @@ export function PrescriptionScanner() {
       {state === "review" || state === "applying" ? (
         <Card>
           <h2 className="text-2xl font-bold">Review the changes</h2>
-          <p className="mt-1 text-muted">AI can misread handwriting. Check each line against the paper before applying.</p>
+          <p className="mt-1 text-muted">
+            AI can misread handwriting. Check each line against the paper before applying.
+          </p>
           {rows.length === 0 ? <p className="mt-4">No medicines were found in that photo.</p> : null}
           <ul className="mt-4 space-y-4">
             {rows.map((r, i) => (
@@ -133,26 +154,43 @@ export function PrescriptionScanner() {
                     Now: {r.item.before.doseText} at {r.item.before.times.join(", ")}
                   </p>
                 ) : null}
-                {r.item.after?.instructions ? <p className="text-muted">Instructions: {r.item.after.instructions}</p> : null}
+                {r.item.after?.instructions ? (
+                  <p className="text-muted">Instructions: {r.item.after.instructions}</p>
+                ) : null}
                 {r.item.kind === "added" || r.item.kind === "changed" ? (
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
                       <label htmlFor={`dose-${i}`} className="font-semibold">
                         Dose
                       </label>
-                      <input id={`dose-${i}`} value={r.doseText} onChange={(e) => update(i, { doseText: e.target.value })} className="mt-1 block min-h-12 w-full rounded-xl border-2 border-line bg-surface px-3" />
+                      <input
+                        id={`dose-${i}`}
+                        value={r.doseText}
+                        onChange={(e) => update(i, { doseText: e.target.value })}
+                        className="mt-1 block min-h-12 w-full rounded-xl border-2 border-line bg-surface px-3"
+                      />
                     </div>
                     <div>
                       <label htmlFor={`times-${i}`} className="font-semibold">
                         Times (HH:MM, comma separated)
                       </label>
-                      <input id={`times-${i}`} value={r.times} onChange={(e) => update(i, { times: e.target.value })} className="mt-1 block min-h-12 w-full rounded-xl border-2 border-line bg-surface px-3" />
+                      <input
+                        id={`times-${i}`}
+                        value={r.times}
+                        onChange={(e) => update(i, { times: e.target.value })}
+                        className="mt-1 block min-h-12 w-full rounded-xl border-2 border-line bg-surface px-3"
+                      />
                     </div>
                   </div>
                 ) : null}
                 {r.item.kind !== "unchanged" ? (
                   <label className="mt-3 flex min-h-12 items-center gap-2 font-semibold">
-                    <input type="checkbox" className="h-5 w-5" checked={r.selected} onChange={(e) => update(i, { selected: e.target.checked })} />
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5"
+                      checked={r.selected}
+                      onChange={(e) => update(i, { selected: e.target.checked })}
+                    />
                     {r.item.kind === "stopped" ? "Stop this medicine" : "Apply this change"}
                   </label>
                 ) : null}
@@ -160,7 +198,11 @@ export function PrescriptionScanner() {
             ))}
           </ul>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button size="lg" onClick={apply} disabled={state === "applying" || !rows.some((r) => r.selected && r.item.kind !== "unchanged")}>
+            <Button
+              size="lg"
+              onClick={apply}
+              disabled={state === "applying" || !rows.some((r) => r.selected && r.item.kind !== "unchanged")}
+            >
               {state === "applying" ? "Applying…" : "Confirm and apply"}
             </Button>
             <Button variant="ghost" size="lg" onClick={() => setState("idle")}>
@@ -172,7 +214,11 @@ export function PrescriptionScanner() {
 
       {state === "done" ? (
         <Notice tone="ok" title={`${applied} change(s) applied`}>
-          Reminders have been updated. <Link href="/app/medicines" className="font-semibold underline">Review medicines</Link> to set stock for new ones.
+          Reminders have been updated.{" "}
+          <Link href="/app/medicines" className="font-semibold underline">
+            Review medicines
+          </Link>{" "}
+          to set stock for new ones.
         </Notice>
       ) : null}
     </div>

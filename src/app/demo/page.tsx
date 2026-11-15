@@ -16,10 +16,7 @@ export default function DemoPage() {
   return (
     <main id="main" className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
       <div className="mb-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:underline"
-        >
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:underline">
           ← Back to Overview
         </Link>
       </div>
@@ -42,7 +39,12 @@ export default function DemoPage() {
       </div>
 
       <div className="mt-8 rounded-2xl border border-line bg-surface-2/60 p-4 text-center text-xs text-muted">
-        Prefer manual sign-in? Use Circle Code <strong className="text-ink font-mono px-1">{DEMO_CODE}</strong> and Passcode <strong className="text-ink font-mono px-1">{DEMO_PASSCODE}</strong> on the <Link href="/login" className="text-brand font-bold underline">Login Screen</Link>.
+        Prefer manual sign-in? Use Circle Code <strong className="text-ink font-mono px-1">{DEMO_CODE}</strong> and
+        Passcode <strong className="text-ink font-mono px-1">{DEMO_PASSCODE}</strong> on the{" "}
+        <Link href="/login" className="text-brand font-bold underline">
+          Login Screen
+        </Link>
+        .
       </div>
     </main>
   );

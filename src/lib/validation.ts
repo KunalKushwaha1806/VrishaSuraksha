@@ -14,10 +14,7 @@ const optionalText = (max: number) =>
     .optional()
     .transform((v) => (v ? v : undefined));
 
-export const passcodeSchema = z
-  .string()
-  .min(6, "Use at least 6 characters")
-  .max(64, "Use at most 64 characters");
+export const passcodeSchema = z.string().min(6, "Use at least 6 characters").max(64, "Use at most 64 characters");
 
 export const circleCodeSchema = z
   .string()
@@ -104,7 +101,16 @@ export const appointmentSchema = z.object({
   place: trimmed(120),
   startsAt: z.string().datetime({ offset: true }),
   notes: optionalText(500),
-  reminderOffsetsMin: z.array(z.number().int().min(10).max(7 * 24 * 60)).max(4).default([24 * 60, 120]),
+  reminderOffsetsMin: z
+    .array(
+      z
+        .number()
+        .int()
+        .min(10)
+        .max(7 * 24 * 60),
+    )
+    .max(4)
+    .default([24 * 60, 120]),
 });
 
 export const symptomSchema = z.object({
@@ -116,15 +122,24 @@ export const symptomSchema = z.object({
 export const reactionSchema = z.object({ kind: z.enum(["heart", "proud", "love", "call_soon", "take_care"]) });
 
 export const voiceNoteSchema = z.object({
-  mimeType: z.string().transform((v) => v.split(";")[0]).pipe(z.enum(VOICE_MIME_TYPES)),
+  mimeType: z
+    .string()
+    .transform((v) => v.split(";")[0])
+    .pipe(z.enum(VOICE_MIME_TYPES)),
   durationSec: z.number().min(1).max(MAX_VOICE_SECONDS),
-  audioBase64: z.string().min(10).max(Math.ceil((MAX_VOICE_BYTES * 4) / 3) + 8),
+  audioBase64: z
+    .string()
+    .min(10)
+    .max(Math.ceil((MAX_VOICE_BYTES * 4) / 3) + 8),
   medicationId: z.string().max(64).nullable().default(null),
 });
 
 export const prescriptionScanSchema = z.object({
   mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
-  imageBase64: z.string().min(100).max(Math.ceil((MAX_IMAGE_BYTES * 4) / 3) + 8),
+  imageBase64: z
+    .string()
+    .min(100)
+    .max(Math.ceil((MAX_IMAGE_BYTES * 4) / 3) + 8),
 });
 
 export const prescriptionApplySchema = z.object({
@@ -158,7 +173,15 @@ export const shareCreateSchema = z.object({ hours: z.union([z.literal(24), z.lit
 
 export const emergencyContactsSchema = z.object({
   emergencyContacts: z
-    .array(z.object({ name: trimmed(60), phone: z.string().trim().regex(/^[+\d][\d\s-]{6,18}$/, "Enter a phone number") }))
+    .array(
+      z.object({
+        name: trimmed(60),
+        phone: z
+          .string()
+          .trim()
+          .regex(/^[+\d][\d\s-]{6,18}$/, "Enter a phone number"),
+      }),
+    )
     .max(4),
 });
 

@@ -67,7 +67,8 @@ export async function updateMedication(
 
   if (fields.stock !== undefined && fields.stock > existing.stock) {
     const claim = await db.get<RefillClaim>(C.refillClaims(circleId), id);
-    if (claim && !claim.resolvedAt) await db.update(C.refillClaims(circleId), id, { resolvedAt: new Date().toISOString() });
+    if (claim && !claim.resolvedAt)
+      await db.update(C.refillClaims(circleId), id, { resolvedAt: new Date().toISOString() });
   }
   if (fields.schedule || fields.criticality || fields.name) await resyncMedication(db, updated);
   await logActivity(circleId, actor, `updated medicine ${updated.name}`, "medication", id);

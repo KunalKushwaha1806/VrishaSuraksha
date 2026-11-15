@@ -5,7 +5,17 @@ import { adherence, adherenceByMedication, streak, weekSummary } from "../domain
 import { can, visibilityOf } from "../domain/permissions";
 import { forecastRefill } from "../domain/refill";
 import { features } from "../env";
-import { C, type Appointment, type DoseEvent, type Job, type Medication, type Member, type Reaction, type RefillClaim, type VoiceNote } from "../models";
+import {
+  C,
+  type Appointment,
+  type DoseEvent,
+  type Job,
+  type Medication,
+  type Member,
+  type Reaction,
+  type RefillClaim,
+  type VoiceNote,
+} from "../models";
 import { addDays, istDayKey } from "../time";
 
 const HISTORY_DAYS = 30;
@@ -17,7 +27,11 @@ async function loadCircle(circleId: string, now: Date) {
     db.query<Member>(C.members(circleId)),
     db.query<Medication>(C.medications(circleId), { where: [["active", "==", true]] }),
     db.query<DoseEvent>(C.doses(circleId), { where: [["dayKey", ">=", since]] }),
-    db.query<Appointment>(C.appointments(circleId), { where: [["startsAt", ">=", now.toISOString()]], orderBy: { field: "startsAt" }, limit: 5 }),
+    db.query<Appointment>(C.appointments(circleId), {
+      where: [["startsAt", ">=", now.toISOString()]],
+      orderBy: { field: "startsAt" },
+      limit: 5,
+    }),
     db.query<Reaction>(C.reactions(circleId), { orderBy: { field: "createdAt", direction: "desc" }, limit: 8 }),
     db.query<RefillClaim>(C.refillClaims(circleId)),
     db.query<VoiceNote>(C.voiceNotes(circleId), { orderBy: { field: "createdAt", direction: "desc" }, limit: 10 }),
@@ -69,7 +83,14 @@ export async function buildDashboard({ member, circle }: AuthContext, now = new 
     .filter(({ f }) => f.needsRefill)
     .map(({ med, f }) => {
       const claim = data.claims.find((c) => c.medicationId === med.id);
-      return { medicationId: med.id, name: med.name, stock: med.stock, daysLeft: f.daysLeft, runOutDay: f.runOutDay, claimedByName: claim?.claimedByName ?? null };
+      return {
+        medicationId: med.id,
+        name: med.name,
+        stock: med.stock,
+        daysLeft: f.daysLeft,
+        runOutDay: f.runOutDay,
+        claimedByName: claim?.claimedByName ?? null,
+      };
     });
 
   const recentMissed = isManager
@@ -91,10 +112,17 @@ export async function buildDashboard({ member, circle }: AuthContext, now = new 
     today: vis.doses ? todayDoses : [],
     adherence: vis.doses
       ? {
-          today: adherence(past.filter((d) => d.dayKey === today), now),
+          today: adherence(
+            past.filter((d) => d.dayKey === today),
+            now,
+          ),
           week: adherence(weekDoses, now),
           month: adherence(past, now),
-          byMedication: data.meds.map((m) => ({ medicationId: m.id, name: m.name, percent: byMed[m.id]?.percent ?? null })),
+          byMedication: data.meds.map((m) => ({
+            medicationId: m.id,
+            name: m.name,
+            percent: byMed[m.id]?.percent ?? null,
+          })),
         }
       : null,
     medications: data.meds
@@ -116,9 +144,7 @@ export async function buildDashboard({ member, circle }: AuthContext, now = new 
       ? data.appointments.map((a) => ({ id: a.id, doctor: a.doctor, place: a.place, startsAt: a.startsAt }))
       : [],
     reactions: data.reactions,
-    voiceNotes: can(member.role, "voice:listen")
-      ? data.voice
-      : data.voice.filter((v) => v.fromMemberId === member.id),
+    voiceNotes: can(member.role, "voice:listen") ? data.voice : data.voice.filter((v) => v.fromMemberId === member.id),
     recentMissed,
     failedJobs: isManager ? data.failedJobs : 0,
   };

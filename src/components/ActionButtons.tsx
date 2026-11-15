@@ -8,7 +8,17 @@ import { Button, LinkButton, Notice } from "./ui";
 
 type Choice = "taken" | "forgot" | "unwell" | "side_effect" | "ran_out" | "claim";
 
-export function ActionButtons({ token, kind, lang, onBehalf = false }: { token: string; kind: "dose" | "refill"; lang: Lang; onBehalf?: boolean }) {
+export function ActionButtons({
+  token,
+  kind,
+  lang,
+  onBehalf = false,
+}: {
+  token: string;
+  kind: "dose" | "refill";
+  lang: Lang;
+  onBehalf?: boolean;
+}) {
   const d = t(lang);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
@@ -64,7 +74,9 @@ export function ActionButtons({ token, kind, lang, onBehalf = false }: { token: 
         </fieldset>
       ) : (
         <>
-          {onBehalf ? <p className="text-muted">You are logging this on the elder&apos;s behalf. It will be recorded.</p> : null}
+          {onBehalf ? (
+            <p className="text-muted">You are logging this on the elder&apos;s behalf. It will be recorded.</p>
+          ) : null}
           <Button size="xl" className="w-full" onClick={() => act("taken")} disabled={busy}>
             ✅ {d.tookIt}
           </Button>

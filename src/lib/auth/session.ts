@@ -31,7 +31,11 @@ export async function signSession(member: Pick<Member, "id" | "circleId" | "role
 
 export async function verifySession(token: string): Promise<SessionClaims | null> {
   try {
-    const { payload } = await jwtVerify(token, secret(), { issuer: ISSUER, audience: "session", algorithms: ["HS256"] });
+    const { payload } = await jwtVerify(token, secret(), {
+      issuer: ISSUER,
+      audience: "session",
+      algorithms: ["HS256"],
+    });
     if (typeof payload.sub !== "string" || typeof payload.cid !== "string") return null;
     return { sub: payload.sub, cid: payload.cid, role: payload.role as Role };
   } catch {

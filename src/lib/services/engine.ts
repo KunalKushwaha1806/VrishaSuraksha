@@ -68,13 +68,7 @@ function newJob(partial: Pick<Job, "id" | "circleId" | "kind" | "dueAt"> & Parti
 }
 
 /** Creates dose rows and their escalation jobs for one medication. Idempotent. */
-export async function materializeDoses(
-  db: Db,
-  med: Medication,
-  from: Date,
-  to: Date,
-  now: Date,
-): Promise<number> {
+export async function materializeDoses(db: Db, med: Medication, from: Date, to: Date, now: Date): Promise<number> {
   if (!med.active) return 0;
   let created = 0;
   await Promise.all(
@@ -215,7 +209,13 @@ export async function scheduleAppointmentJobs(db: Db, appt: Appointment, now = n
       return db.create(
         C.jobs,
         id,
-        newJob({ id, circleId: appt.circleId, kind: "appointment", dueAt: dueAt.toISOString(), appointmentId: appt.id }),
+        newJob({
+          id,
+          circleId: appt.circleId,
+          kind: "appointment",
+          dueAt: dueAt.toISOString(),
+          appointmentId: appt.id,
+        }),
       );
     }),
   );
@@ -226,7 +226,9 @@ export async function notify(circleId: string, payload: NotifyPayload, now = new
   const db = await getDb();
   const id = `notify_${newId()}`;
   await db.create(C.jobs, id, newJob({ id, circleId, kind: "notify", dueAt: now.toISOString(), payload }));
-  await processJob(id, now).catch((err) => log.warn("Immediate notice delivery deferred to cron", { error: errorMessage(err) }));
+  await processJob(id, now).catch((err) =>
+    log.warn("Immediate notice delivery deferred to cron", { error: errorMessage(err) }),
+  );
 }
 
 function recipients(members: Member[], job: Job): Member[] {
@@ -251,7 +253,13 @@ function recipients(members: Member[], job: Job): Member[] {
       const p = job.payload;
       if (!p) return [];
       const pool =
-        p.audience === "elder" ? elder : p.audience === "caretakers" ? caretakers : p.audience === "family" ? family : active;
+        p.audience === "elder"
+          ? elder
+          : p.audience === "caretakers"
+            ? caretakers
+            : p.audience === "family"
+              ? family
+              : active;
       return pool.filter((m) => !p.requires || canSee(m, p.requires));
     }
   }
@@ -273,7 +281,9 @@ async function composeFor(job: Job, ctx: JobContext, member: Member): Promise<Em
   const lang = member.language;
   const d = t(lang);
   const doseLink = async (label: string) =>
-    dose ? { label, url: await actionUrl({ kind: "dose", circleId: ctx.circle.id, memberId: member.id, ref: dose.id }) } : undefined;
+    dose
+      ? { label, url: await actionUrl({ kind: "dose", circleId: ctx.circle.id, memberId: member.id, ref: dose.id }) }
+      : undefined;
 
   switch (job.kind) {
     case "dose_due":
@@ -281,19 +291,28 @@ async function composeFor(job: Job, ctx: JobContext, member: Member): Promise<Em
       if (!dose) return null;
       const time = formatTime(dose.scheduledFor);
       const again = job.kind === "elder_renudge";
-      const vn = ctx.voiceNotes?.find((v) => v.medicationId === dose.medicationId) ?? ctx.voiceNotes?.find((v) => !v.medicationId);
+      const vn =
+        ctx.voiceNotes?.find((v) => v.medicationId === dose.medicationId) ??
+        ctx.voiceNotes?.find((v) => !v.medicationId);
       const lines = [
         lang === "hi" ? `समय: ${time}` : `Scheduled for ${time}${med ? ` (${med.doseText})` : ""}.`,
         lang === "hi" ? "दवा लेने के बाद नीचे दबाइए।" : "Tap the button once you have taken it.",
       ];
       if (vn) {
-        lines.push(lang === "hi" ? `🎙️ परिवार का वॉइस मैसेज सुनें: ${appUrl}/v/${vn.id}` : `🎙️ Listen to a family voice reminder: ${appUrl}/v/${vn.id}`);
+        lines.push(
+          lang === "hi"
+            ? `🎙️ परिवार का वॉइस मैसेज सुनें: ${appUrl}/v/${vn.id}`
+            : `🎙️ Listen to a family voice reminder: ${appUrl}/v/${vn.id}`,
+        );
       }
       return {
         to: member.email,
         lang,
         subject: lang === "hi" ? `दवा का समय: ${dose.medName}` : `${again ? "Reminder: " : ""}Time for ${dose.medName}`,
-        heading: lang === "hi" ? `${d.greeting} ${member.name}, ${dose.medName} लेने का समय है` : `${d.greeting} ${member.name}, it's time for ${dose.medName}`,
+        heading:
+          lang === "hi"
+            ? `${d.greeting} ${member.name}, ${dose.medName} लेने का समय है`
+            : `${d.greeting} ${member.name}, it's time for ${dose.medName}`,
         lines,
         action: await doseLink(d.tookIt),
       };
@@ -304,8 +323,13 @@ async function composeFor(job: Job, ctx: JobContext, member: Member): Promise<Em
         to: member.email,
         lang,
         subject: lang === "hi" ? `${dose.medName} छूट गई?` : `Did you miss ${dose.medName}?`,
-        heading: lang === "hi" ? `${dose.medName} की खुराक दर्ज नहीं हुई` : `${dose.medName} at ${formatTime(dose.scheduledFor)} was not logged`,
-        lines: [lang === "hi" ? "बताइए क्या हुआ, ताकि परिवार मदद कर सके।" : "Tell us what happened so your family can help."],
+        heading:
+          lang === "hi"
+            ? `${dose.medName} की खुराक दर्ज नहीं हुई`
+            : `${dose.medName} at ${formatTime(dose.scheduledFor)} was not logged`,
+        lines: [
+          lang === "hi" ? "बताइए क्या हुआ, ताकि परिवार मदद कर सके।" : "Tell us what happened so your family can help.",
+        ],
         action: await doseLink(d.whyMissed),
       };
     }
@@ -321,7 +345,9 @@ async function composeFor(job: Job, ctx: JobContext, member: Member): Promise<Em
           `${elderName} was reminded but has not marked this dose as taken.`,
           caretaker ? "You can check in, or log it on their behalf with a note." : "A gentle call might help.",
         ],
-        action: caretaker ? await doseLink("Log or check this dose") : { label: "Open VridhaSuraksha", url: `${appUrl}/app` },
+        action: caretaker
+          ? await doseLink("Log or check this dose")
+          : { label: "Open VridhaSuraksha", url: `${appUrl}/app` },
       };
     }
     case "appointment": {
@@ -331,8 +357,15 @@ async function composeFor(job: Job, ctx: JobContext, member: Member): Promise<Em
         lang,
         subject: `Doctor visit: ${appt.doctor}, ${formatDateTime(appt.startsAt)}`,
         heading: `Upcoming visit with ${appt.doctor}`,
-        lines: [`When: ${formatDateTime(appt.startsAt)}`, `Where: ${appt.place}`, "A doctor visit brief is ready to print in the app."],
-        action: { label: "Open the visit brief", url: `${appUrl}/app/brief?appointment=${encodeURIComponent(appt.id)}` },
+        lines: [
+          `When: ${formatDateTime(appt.startsAt)}`,
+          `Where: ${appt.place}`,
+          "A doctor visit brief is ready to print in the app.",
+        ],
+        action: {
+          label: "Open the visit brief",
+          url: `${appUrl}/app/brief?appointment=${encodeURIComponent(appt.id)}`,
+        },
       };
     }
     case "refill": {
@@ -357,7 +390,13 @@ async function composeFor(job: Job, ctx: JobContext, member: Member): Promise<Em
     case "notify": {
       const p = job.payload;
       if (!p) return null;
-      return { to: member.email, subject: p.subject, heading: p.subject, lines: [p.message], action: { label: "Open VridhaSuraksha", url: `${appUrl}/app` } };
+      return {
+        to: member.email,
+        subject: p.subject,
+        heading: p.subject,
+        lines: [p.message],
+        action: { label: "Open VridhaSuraksha", url: `${appUrl}/app` },
+      };
     }
   }
 }
@@ -391,9 +430,17 @@ async function execute(db: Db, job: Job, now: Date): Promise<Outcome> {
     }
   }
   if (job.kind === "appointment" && (!appt || appt.startsAt < now.toISOString())) return "cancelled";
-  if (job.kind === "refill" && (!med || !med.active || (await openRefillClaim(db, circle.id, med.id)))) return "cancelled";
+  if (job.kind === "refill" && (!med || !med.active || (await openRefillClaim(db, circle.id, med.id))))
+    return "cancelled";
 
-  const ctx: JobContext = { circle, elder: members.find((m) => m.id === circle.elderMemberId), dose, med, appt, voiceNotes };
+  const ctx: JobContext = {
+    circle,
+    elder: members.find((m) => m.id === circle.elderMemberId),
+    dose,
+    med,
+    appt,
+    voiceNotes,
+  };
   const sentTo = [...job.sentTo];
   for (const member of recipients(members, job)) {
     if (sentTo.includes(member.id)) continue;
@@ -417,7 +464,12 @@ export async function processJob(jobId: string, now = new Date()): Promise<Outco
       (job.status === "pending" && job.dueAt <= nowIso) ||
       (job.status === "sending" && job.leaseUntil !== null && job.leaseUntil <= nowIso);
     if (!claimable) return null;
-    const lease = { status: "sending" as const, leaseUntil: addMinutes(now, LEASE_MIN).toISOString(), attempts: job.attempts + 1, updatedAt: nowIso };
+    const lease = {
+      status: "sending" as const,
+      leaseUntil: addMinutes(now, LEASE_MIN).toISOString(),
+      attempts: job.attempts + 1,
+      updatedAt: nowIso,
+    };
     tx.update(C.jobs, jobId, lease);
     return { ...job, ...lease };
   });
@@ -425,7 +477,12 @@ export async function processJob(jobId: string, now = new Date()): Promise<Outco
 
   try {
     const outcome = await execute(db, claimed, now);
-    await db.update(C.jobs, jobId, { status: outcome, leaseUntil: null, lastError: null, updatedAt: new Date().toISOString() });
+    await db.update(C.jobs, jobId, {
+      status: outcome,
+      leaseUntil: null,
+      lastError: null,
+      updatedAt: new Date().toISOString(),
+    });
     return outcome;
   } catch (err) {
     const message = errorMessage(err).slice(0, 300);

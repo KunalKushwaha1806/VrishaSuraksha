@@ -4,7 +4,12 @@ import { headers } from "next/headers";
 import "./globals.css";
 
 const noto = Noto_Sans({ subsets: ["latin"], variable: "--font-noto", display: "swap" });
-const notoDeva = Noto_Sans_Devanagari({ subsets: ["devanagari"], weight: ["400", "600", "700"], variable: "--font-noto-deva", display: "swap" });
+const notoDeva = Noto_Sans_Devanagari({
+  subsets: ["devanagari"],
+  weight: ["400", "600", "700"],
+  variable: "--font-noto-deva",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "VridhaSuraksha", template: "%s · VridhaSuraksha" },

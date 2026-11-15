@@ -38,7 +38,11 @@ const schema = z.object({
   EMAIL_FROM: z.string().default("VridhaSuraksha <no-reply@vridhasuraksha.local>"),
   TTS_ENABLED: bool,
   DEMO_MODE: bool,
-  DEMO_INBOX: z.string().email().optional().or(z.literal("").transform(() => undefined)),
+  DEMO_INBOX: z
+    .string()
+    .email()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
 });
 
@@ -61,7 +65,7 @@ export function env(): Env {
     JWT_SECRET: raw.JWT_SECRET ?? (isProd ? undefined : DEV_JWT_SECRET),
     ENCRYPTION_KEY: raw.ENCRYPTION_KEY ?? (isProd ? undefined : DEV_ENCRYPTION_KEY),
     CRON_SECRET: raw.CRON_SECRET ?? (isProd ? undefined : DEV_CRON_SECRET),
-    DATA_BACKEND: raw.DATA_BACKEND ?? (raw.DATABASE_URL ? "prisma" : (isProd ? "prisma" : "memory")),
+    DATA_BACKEND: raw.DATA_BACKEND ?? (raw.DATABASE_URL ? "prisma" : isProd ? "prisma" : "memory"),
     APP_URL: raw.APP_URL || platformUrl(raw),
   });
   if (!parsed.success) {

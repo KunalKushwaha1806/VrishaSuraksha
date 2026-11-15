@@ -45,12 +45,7 @@ export interface PlannedStep {
  * are dropped so a late generator run never floods anyone with stale nudges;
  * the final "mark missed" step is always kept so the log stays accurate.
  */
-export function planEscalation(
-  criticality: Criticality,
-  scheduledFor: Date,
-  now: Date,
-  graceMin = 5,
-): PlannedStep[] {
+export function planEscalation(criticality: Criticality, scheduledFor: Date, now: Date, graceMin = 5): PlannedStep[] {
   const cutoff = now.getTime() - graceMin * 60_000;
   return LADDERS[criticality]
     .map((s) => ({ kind: s.kind, dueAt: new Date(scheduledFor.getTime() + s.offsetMin * 60_000) }))

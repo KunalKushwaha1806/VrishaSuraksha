@@ -58,7 +58,10 @@ export function EmergencyManager({ initialContacts }: { initialContacts: Emergen
     e.preventDefault();
     setError(null);
     try {
-      await api("/api/circle", { method: "PATCH", body: { emergencyContacts: contacts.filter((c) => c.name && c.phone) } });
+      await api("/api/circle", {
+        method: "PATCH",
+        body: { emergencyContacts: contacts.filter((c) => c.name && c.phone) },
+      });
       setSavedContacts(true);
     } catch (err) {
       setError(errorText(err));
@@ -88,7 +91,13 @@ export function EmergencyManager({ initialContacts }: { initialContacts: Emergen
         {created ? (
           <div className="mt-5 flex flex-wrap items-center gap-6 rounded-2xl bg-surface-2 p-4">
             {/* eslint-disable-next-line @next/next/no-img-element -- inline data URL generated on the server */}
-            <img src={created.qrDataUrl} alt="QR code for the emergency card" width={200} height={200} className="rounded-xl bg-white p-2" />
+            <img
+              src={created.qrDataUrl}
+              alt="QR code for the emergency card"
+              width={200}
+              height={200}
+              className="rounded-xl bg-white p-2"
+            />
             <div className="space-y-2">
               <p className="font-semibold">Valid until {formatDateTime(created.expiresAt)}</p>
               <p className="break-all text-sm text-muted">{created.url}</p>
@@ -133,14 +142,22 @@ export function EmergencyManager({ initialContacts }: { initialContacts: Emergen
                 id={`c-name-${i}`}
                 label={`Contact ${i + 1} name`}
                 value={contacts[i]?.name ?? ""}
-                onChange={(e) => setContacts((prev) => Object.assign([...prev], { [i]: { name: e.target.value, phone: prev[i]?.phone ?? "" } }))}
+                onChange={(e) =>
+                  setContacts((prev) =>
+                    Object.assign([...prev], { [i]: { name: e.target.value, phone: prev[i]?.phone ?? "" } }),
+                  )
+                }
               />
               <Field
                 id={`c-phone-${i}`}
                 label={`Contact ${i + 1} phone`}
                 type="tel"
                 value={contacts[i]?.phone ?? ""}
-                onChange={(e) => setContacts((prev) => Object.assign([...prev], { [i]: { name: prev[i]?.name ?? "", phone: e.target.value } }))}
+                onChange={(e) =>
+                  setContacts((prev) =>
+                    Object.assign([...prev], { [i]: { name: prev[i]?.name ?? "", phone: e.target.value } }),
+                  )
+                }
               />
             </div>
           ))}

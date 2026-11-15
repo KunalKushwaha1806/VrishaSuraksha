@@ -50,7 +50,15 @@ export function ElderHome() {
   return <ElderScreen data={data} refresh={refresh} welcomeCode={welcome} />;
 }
 
-function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh: () => Promise<void>; welcomeCode: string | null }) {
+function ElderScreen({
+  data,
+  refresh,
+  welcomeCode,
+}: {
+  data: Dashboard;
+  refresh: () => Promise<void>;
+  welcomeCode: string | null;
+}) {
   const lang: Lang = data.me.language;
   const d = t(lang);
   const firstName = data.me.name.split(" ")[0];
@@ -67,7 +75,8 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
   }, [data.today, selectedDoseId]);
 
   const voice = focus
-    ? (data.voiceNotes.find((v) => v.medicationId === focus.medicationId) ?? data.voiceNotes.find((v) => !v.medicationId && !v.playedAt))
+    ? (data.voiceNotes.find((v) => v.medicationId === focus.medicationId) ??
+      data.voiceNotes.find((v) => !v.medicationId && !v.playedAt))
     : undefined;
 
   const [step, setStep] = useState<"ask" | "reasons" | "double">("ask");
@@ -138,7 +147,8 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
     <div lang={lang} className="space-y-6 text-xl max-w-3xl mx-auto pb-12">
       {welcomeCode ? (
         <Notice tone="ok" title="Your care circle is ready">
-          Share the circle code <strong>{welcomeCode}</strong> with your family, then create invite passcodes from “Who can see what”.
+          Share the circle code <strong>{welcomeCode}</strong> with your family, then create invite passcodes from “Who
+          can see what”.
         </Notice>
       ) : null}
 
@@ -166,7 +176,10 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
       <Card className="border-2 border-amber-400/40 bg-linear-to-br from-amber-500/10 to-orange-500/5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/20 text-3xl shadow-xs" aria-hidden="true">
+            <span
+              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/20 text-3xl shadow-xs"
+              aria-hidden="true"
+            >
               🔥
             </span>
             <div>
@@ -225,7 +238,12 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
                   {lang === "hi" ? `${voice.fromName} का वॉइस संदेश` : `Voice note from ${voice.fromName}`}
                 </p>
                 {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                <audio controls preload="metadata" className="mt-2.5 w-full" src={`/api/voice-notes/${encodeURIComponent(voice.id)}`}>
+                <audio
+                  controls
+                  preload="metadata"
+                  className="mt-2.5 w-full"
+                  src={`/api/voice-notes/${encodeURIComponent(voice.id)}`}
+                >
                   {d.play}
                 </audio>
               </div>
@@ -241,7 +259,10 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
                   onClick={() => log({ status: "TAKEN" })}
                   disabled={busy}
                 >
-                  <span aria-hidden="true" className="text-3xl">✅</span> {d.tookIt}
+                  <span aria-hidden="true" className="text-3xl">
+                    ✅
+                  </span>{" "}
+                  {d.tookIt}
                 </Button>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -289,7 +310,9 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
                       onClick={() => log({ status: "MISSED", reason: r.key })}
                       disabled={busy}
                     >
-                      <span className="text-2xl" aria-hidden="true">{r.icon}</span>
+                      <span className="text-2xl" aria-hidden="true">
+                        {r.icon}
+                      </span>
                       <span>{r.label(d)}</span>
                     </Button>
                   ))}
@@ -308,7 +331,12 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
                   <Button size="lg" variant="secondary" onClick={() => setStep("ask")}>
                     {d.cancel}
                   </Button>
-                  <Button size="lg" variant="danger" onClick={() => log({ status: "TAKEN", confirmDouble: true })} disabled={busy}>
+                  <Button
+                    size="lg"
+                    variant="danger"
+                    onClick={() => log({ status: "TAKEN", confirmDouble: true })}
+                    disabled={busy}
+                  >
                     {d.doubleDoseConfirm}
                   </Button>
                 </div>
@@ -327,12 +355,16 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
             </span>
             <h2 id="active-dose" className="mt-4 text-3xl font-extrabold text-ink">
               {allComplete
-                ? (lang === "hi" ? "शाबाश दादाजी! आज की सभी दवाएं पूरी हुईं" : "Wonderful Dadaji! All medicines complete for today")
+                ? lang === "hi"
+                  ? "शाबाश दादाजी! आज की सभी दवाएं पूरी हुईं"
+                  : "Wonderful Dadaji! All medicines complete for today"
                 : d.nothingToday}
             </h2>
             <p className="mt-2 text-xl text-muted font-medium max-w-md mx-auto">
               {allComplete
-                ? (lang === "hi" ? "परिवार निश्चिंत है और आपका स्वास्थ्य सुरक्षित है।" : "Your family is in the loop and your health is on track.")
+                ? lang === "hi"
+                  ? "परिवार निश्चिंत है और आपका स्वास्थ्य सुरक्षित है।"
+                  : "Your family is in the loop and your health is on track."
                 : d.allDoneSub}
             </p>
           </Card>
@@ -374,9 +406,7 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
                       {x.status === "TAKEN" ? "✅" : x.status === "MISSED" ? "⚠️" : "💊"}
                     </span>
                     <div>
-                      <p className="font-extrabold text-xl text-ink leading-tight">
-                        {x.medName}
-                      </p>
+                      <p className="font-extrabold text-xl text-ink leading-tight">{x.medName}</p>
                       <p className="text-base text-muted font-medium">
                         {x.doseText} · {formatTime(x.scheduledFor)}
                       </p>
@@ -413,16 +443,15 @@ function ElderScreen({ data, refresh, welcomeCode }: { data: Dashboard; refresh:
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {data.reactions.slice(0, 4).map((r) => (
-              <div key={r.id} className="rounded-2xl border border-rose-200 bg-rose-50/60 dark:bg-rose-950/20 p-4 shadow-2xs">
+              <div
+                key={r.id}
+                className="rounded-2xl border border-rose-200 bg-rose-50/60 dark:bg-rose-950/20 p-4 shadow-2xs"
+              >
                 <span className="text-2xl" aria-hidden="true">
                   {r.kind === "heart" ? "❤️" : r.kind === "proud" ? "🌟" : "💌"}
                 </span>
-                <p className="mt-2 text-lg font-bold text-ink">
-                  {r.fromName}
-                </p>
-                <p className="text-base text-muted font-medium">
-                  {reactionText(r.kind, d)}
-                </p>
+                <p className="mt-2 text-lg font-bold text-ink">{r.fromName}</p>
+                <p className="text-base text-muted font-medium">{reactionText(r.kind, d)}</p>
               </div>
             ))}
           </div>

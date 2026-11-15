@@ -36,7 +36,12 @@ export async function listAppointments(circleId: string, fromIso?: string): Prom
   return fromIso ? all.filter((a) => a.startsAt >= fromIso) : all;
 }
 
-export async function saveAppointment(circleId: string, actor: Member, input: AppointmentInput, id?: string): Promise<Appointment> {
+export async function saveAppointment(
+  circleId: string,
+  actor: Member,
+  input: AppointmentInput,
+  id?: string,
+): Promise<Appointment> {
   const db = await getDb();
   const existing = id ? await db.get<Appointment>(C.appointments(circleId), id) : null;
   if (id && !existing) throw fail.notFound("Appointment not found.");
@@ -52,7 +57,13 @@ export async function saveAppointment(circleId: string, actor: Member, input: Ap
   };
   await db.set(C.appointments(circleId), appt.id, appt);
   await scheduleAppointmentJobs(db, appt);
-  await logActivity(circleId, actor, `${existing ? "updated" : "added"} a visit with ${appt.doctor}`, "appointment", appt.id);
+  await logActivity(
+    circleId,
+    actor,
+    `${existing ? "updated" : "added"} a visit with ${appt.doctor}`,
+    "appointment",
+    appt.id,
+  );
   invalidateCircle(circleId);
   return appt;
 }
@@ -69,7 +80,11 @@ export async function deleteAppointment(circleId: string, actor: Member, id: str
 
 /* ---------- Symptom diary ---------- */
 
-export async function addSymptomNote(circleId: string, actor: Member, input: z.infer<typeof symptomSchema>): Promise<SymptomEntry> {
+export async function addSymptomNote(
+  circleId: string,
+  actor: Member,
+  input: z.infer<typeof symptomSchema>,
+): Promise<SymptomEntry> {
   const db = await getDb();
   const entry: SymptomEntry = {
     id: newId(),
@@ -88,7 +103,10 @@ export async function addSymptomNote(circleId: string, actor: Member, input: z.i
 
 export async function listSymptoms(circleId: string, sinceIso?: string) {
   const db = await getDb();
-  const entries = await db.query<SymptomEntry>(C.symptoms(circleId), { orderBy: { field: "createdAt", direction: "desc" }, limit: 100 });
+  const entries = await db.query<SymptomEntry>(C.symptoms(circleId), {
+    orderBy: { field: "createdAt", direction: "desc" },
+    limit: 100,
+  });
   return entries
     .filter((e) => !sinceIso || e.createdAt >= sinceIso)
     .map(({ textEnc, ...e }) => ({ ...e, text: decryptText(textEnc) }));
@@ -98,7 +116,13 @@ export async function listSymptoms(circleId: string, sinceIso?: string) {
 
 export async function addReaction(circleId: string, actor: Member, kind: ReactionKind): Promise<Reaction> {
   const db = await getDb();
-  const reaction: Reaction = { id: newId(), fromMemberId: actor.id, fromName: actor.name, kind, createdAt: new Date().toISOString() };
+  const reaction: Reaction = {
+    id: newId(),
+    fromMemberId: actor.id,
+    fromName: actor.name,
+    kind,
+    createdAt: new Date().toISOString(),
+  };
   await db.set(C.reactions(circleId), reaction.id, reaction);
   invalidateCircle(circleId);
   return reaction;
@@ -111,10 +135,15 @@ export async function recentReactions(circleId: string, limit = 10): Promise<Rea
 
 /* ---------- Family voice reminders ---------- */
 
-export async function saveVoiceNote(circleId: string, actor: Member, input: z.infer<typeof voiceNoteSchema>): Promise<VoiceNote> {
+export async function saveVoiceNote(
+  circleId: string,
+  actor: Member,
+  input: z.infer<typeof voiceNoteSchema>,
+): Promise<VoiceNote> {
   const db = await getDb();
   const audio = Buffer.from(input.audioBase64, "base64");
-  if (audio.length === 0 || audio.length > MAX_VOICE_BYTES) throw fail.tooLarge("Voice notes must be under 400 KB (about 15 seconds).");
+  if (audio.length === 0 || audio.length > MAX_VOICE_BYTES)
+    throw fail.tooLarge("Voice notes must be under 400 KB (about 15 seconds).");
   if (input.medicationId && !(await db.get<Medication>(C.medications(circleId), input.medicationId))) {
     throw fail.badRequest("Pick a medicine from the list.");
   }
@@ -138,7 +167,10 @@ export async function saveVoiceNote(circleId: string, actor: Member, input: z.in
 
 export async function listVoiceNotes(circleId: string) {
   const db = await getDb();
-  const notes = await db.query<VoiceNote>(C.voiceNotes(circleId), { orderBy: { field: "createdAt", direction: "desc" }, limit: 20 });
+  const notes = await db.query<VoiceNote>(C.voiceNotes(circleId), {
+    orderBy: { field: "createdAt", direction: "desc" },
+    limit: 20,
+  });
   return notes.map(({ audioEnc, ...meta }) => meta);
 }
 
@@ -173,7 +205,9 @@ export async function claimRefill(circleId: string, actor: Member, medicationId:
   const claim = await db.transaction(async (tx) => {
     const existing = await tx.get<RefillClaim>(C.refillClaims(circleId), medicationId);
     if (existing && !existing.resolvedAt) {
-      throw fail.conflict(`${existing.claimedByName} is already handling this refill.`, { claimedByName: existing.claimedByName });
+      throw fail.conflict(`${existing.claimedByName} is already handling this refill.`, {
+        claimedByName: existing.claimedByName,
+      });
     }
     const fresh: RefillClaim = {
       medicationId,
@@ -198,7 +232,11 @@ export async function listOpenClaims(circleId: string): Promise<RefillClaim[]> {
 
 /* ---------- Emergency QR card ---------- */
 
-export async function createShareToken(circle: Circle, actor: Member, hours: number): Promise<{ token: string; share: ShareToken }> {
+export async function createShareToken(
+  circle: Circle,
+  actor: Member,
+  hours: number,
+): Promise<{ token: string; share: ShareToken }> {
   const db = await getDb();
   const token = randomToken(32);
   const share: ShareToken = {
@@ -217,7 +255,9 @@ export async function createShareToken(circle: Circle, actor: Member, hours: num
 
 export async function listShareTokens(circleId: string): Promise<ShareToken[]> {
   const db = await getDb();
-  const tokens = await db.query<ShareToken>(C.shareTokens(circleId), { orderBy: { field: "createdAt", direction: "desc" } });
+  const tokens = await db.query<ShareToken>(C.shareTokens(circleId), {
+    orderBy: { field: "createdAt", direction: "desc" },
+  });
   return tokens;
 }
 

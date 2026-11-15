@@ -21,7 +21,13 @@ async function toBase64(blob: Blob): Promise<string> {
 }
 
 /** Records a short message in the browser that plays on the elder's screen at dose time. */
-export function VoiceRecorder({ medications, onSaved }: { medications: Array<{ id: string; name: string }>; onSaved: () => void }) {
+export function VoiceRecorder({
+  medications,
+  onSaved,
+}: {
+  medications: Array<{ id: string; name: string }>;
+  onSaved: () => void;
+}) {
   const [state, setState] = useState<"idle" | "recording" | "ready" | "saving">("idle");
   const [seconds, setSeconds] = useState(0);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -31,10 +37,13 @@ export function VoiceRecorder({ medications, onSaved }: { medications: Array<{ i
   const recorder = useRef<MediaRecorder | null>(null);
   const timer = useRef<number | null>(null);
 
-  useEffect(() => () => {
-    if (timer.current) window.clearInterval(timer.current);
-    recorder.current?.stream.getTracks().forEach((t) => t.stop());
-  }, []);
+  useEffect(
+    () => () => {
+      if (timer.current) window.clearInterval(timer.current);
+      recorder.current?.stream.getTracks().forEach((t) => t.stop());
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!blob) return;
@@ -43,7 +52,8 @@ export function VoiceRecorder({ medications, onSaved }: { medications: Array<{ i
     return () => URL.revokeObjectURL(url);
   }, [blob]);
 
-  const supported = typeof window !== "undefined" && typeof MediaRecorder !== "undefined" && Boolean(navigator.mediaDevices);
+  const supported =
+    typeof window !== "undefined" && typeof MediaRecorder !== "undefined" && Boolean(navigator.mediaDevices);
 
   async function start() {
     setMessage(null);
@@ -109,7 +119,12 @@ export function VoiceRecorder({ medications, onSaved }: { medications: Array<{ i
 
   return (
     <div className="space-y-4 rounded-2xl bg-surface-2/60 p-5 border border-line/60">
-      <SelectField id="voice-med" label="Play it for" value={medicationId} onChange={(e) => setMedicationId(e.target.value)}>
+      <SelectField
+        id="voice-med"
+        label="Play it for"
+        value={medicationId}
+        onChange={(e) => setMedicationId(e.target.value)}
+      >
         <option value="">Any medicine (general reminder)</option>
         {medications.map((m) => (
           <option key={m.id} value={m.id}>
@@ -146,10 +161,18 @@ export function VoiceRecorder({ medications, onSaved }: { medications: Array<{ i
             disabled={state === "saving"}
             className="shadow-sm"
           >
-            <span aria-hidden="true" className="text-xl">🎙️</span> {state === "ready" ? "Record again" : "Start recording (15s max)"}
+            <span aria-hidden="true" className="text-xl">
+              🎙️
+            </span>{" "}
+            {state === "ready" ? "Record again" : "Start recording (15s max)"}
           </Button>
           {(state === "ready" || state === "saving") && (
-            <Button size="lg" onClick={save} disabled={state === "saving"} className="bg-ok hover:bg-ok/90 text-white shadow-sm">
+            <Button
+              size="lg"
+              onClick={save}
+              disabled={state === "saving"}
+              className="bg-ok hover:bg-ok/90 text-white shadow-sm"
+            >
               {state === "saving" ? "Saving audio…" : "✓ Save & Send to Dadaji"}
             </Button>
           )}

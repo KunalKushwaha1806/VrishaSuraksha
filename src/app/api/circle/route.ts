@@ -15,9 +15,12 @@ export const PATCH = route({ permission: "share:manage", body: emergencyContacts
 });
 
 /** Elder-only: permanently delete the circle and all data. Requires typing the circle name. */
-export const DELETE = route({ permission: "data:delete", body: deleteCircleSchema, perMinute: 3 }, async ({ auth, body }) => {
-  if (body.confirm !== auth.circle.name) throw fail.badRequest("Type the circle name exactly to confirm.");
-  await deleteCircle(auth.circle);
-  await endSession();
-  return { ok: true };
-});
+export const DELETE = route(
+  { permission: "data:delete", body: deleteCircleSchema, perMinute: 3 },
+  async ({ auth, body }) => {
+    if (body.confirm !== auth.circle.name) throw fail.badRequest("Type the circle name exactly to confirm.");
+    await deleteCircle(auth.circle);
+    await endSession();
+    return { ok: true };
+  },
+);

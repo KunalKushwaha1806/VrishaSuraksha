@@ -5,7 +5,19 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api, errorText, fieldErrors } from "@/lib/client/api";
 import type { Criticality, Schedule } from "@/lib/models";
 import { istDayKey } from "@/lib/time";
-import { Badge, Button, Card, EmptyState, ErrorState, Field, LoadingState, Notice, PageHeader, SelectField, TextArea } from "../ui";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Field,
+  LoadingState,
+  Notice,
+  PageHeader,
+  SelectField,
+  TextArea,
+} from "../ui";
 
 interface MedView {
   id: string;
@@ -23,7 +35,15 @@ interface MedView {
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const CRIT_LABEL: Record<Criticality, string> = { high: "High priority", normal: "Normal", low: "Low priority" };
 
-function MedicineForm({ initial, onSaved, onCancel }: { initial: MedView | null; onSaved: () => void; onCancel: () => void }) {
+function MedicineForm({
+  initial,
+  onSaved,
+  onCancel,
+}: {
+  initial: MedView | null;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -69,7 +89,15 @@ function MedicineForm({ initial, onSaved, onCancel }: { initial: MedView | null;
           </div>
         ) : null}
         <Field id="name" name="name" label="Medicine name" defaultValue={initial?.name} required error={fields.name} />
-        <Field id="doseText" name="doseText" label="Strength / dose" placeholder="e.g. 500 mg" defaultValue={initial?.doseText} required error={fields.doseText} />
+        <Field
+          id="doseText"
+          name="doseText"
+          label="Strength / dose"
+          placeholder="e.g. 500 mg"
+          defaultValue={initial?.doseText}
+          required
+          error={fields.doseText}
+        />
         <SelectField id="form" name="form" label="Form" defaultValue={initial?.form ?? "tablet"}>
           {["tablet", "capsule", "syrup", "injection", "drops", "inhaler", "other"].map((v) => (
             <option key={v} value={v}>
@@ -77,13 +105,37 @@ function MedicineForm({ initial, onSaved, onCancel }: { initial: MedView | null;
             </option>
           ))}
         </SelectField>
-        <SelectField id="criticality" name="criticality" label="How important is it not to miss?" defaultValue={initial?.criticality ?? "normal"}>
+        <SelectField
+          id="criticality"
+          name="criticality"
+          label="How important is it not to miss?"
+          defaultValue={initial?.criticality ?? "normal"}
+        >
           <option value="high">High: alert caretaker and family quickly</option>
           <option value="normal">Normal</option>
           <option value="low">Low: gentle reminders, family not alerted</option>
         </SelectField>
-        <Field id="stock" name="stock" type="number" min={0} label="Units in stock" defaultValue={initial?.stock ?? 30} required error={fields.stock} />
-        <Field id="unitsPerDose" name="unitsPerDose" type="number" min={0.25} step={0.25} label="Units per dose" defaultValue={initial?.unitsPerDose ?? 1} required error={fields.unitsPerDose} />
+        <Field
+          id="stock"
+          name="stock"
+          type="number"
+          min={0}
+          label="Units in stock"
+          defaultValue={initial?.stock ?? 30}
+          required
+          error={fields.stock}
+        />
+        <Field
+          id="unitsPerDose"
+          name="unitsPerDose"
+          type="number"
+          min={0.25}
+          step={0.25}
+          label="Units per dose"
+          defaultValue={initial?.unitsPerDose ?? 1}
+          required
+          error={fields.unitsPerDose}
+        />
 
         <fieldset className="md:col-span-2">
           <legend className="text-base font-semibold">Times of day (India time)</legend>
@@ -101,7 +153,11 @@ function MedicineForm({ initial, onSaved, onCancel }: { initial: MedView | null;
                   className="min-h-12 rounded-xl border-2 border-line bg-surface px-3 text-lg"
                 />
                 {times.length > 1 ? (
-                  <Button variant="ghost" aria-label={`Remove time ${i + 1}`} onClick={() => setTimes((prev) => prev.filter((_, j) => j !== i))}>
+                  <Button
+                    variant="ghost"
+                    aria-label={`Remove time ${i + 1}`}
+                    onClick={() => setTimes((prev) => prev.filter((_, j) => j !== i))}
+                  >
                     ✕
                   </Button>
                 ) : null}
@@ -113,31 +169,59 @@ function MedicineForm({ initial, onSaved, onCancel }: { initial: MedView | null;
               </Button>
             ) : null}
           </div>
-          {fields["schedule.times"] ? <p className="mt-1 text-sm font-semibold text-danger">{fields["schedule.times"]}</p> : null}
+          {fields["schedule.times"] ? (
+            <p className="mt-1 text-sm font-semibold text-danger">{fields["schedule.times"]}</p>
+          ) : null}
         </fieldset>
 
         <fieldset className="md:col-span-2">
           <legend className="text-base font-semibold">Days</legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {DAYS.map((label, i) => (
-              <label key={label} className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 border-line px-3">
+              <label
+                key={label}
+                className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 border-line px-3"
+              >
                 <input
                   type="checkbox"
                   className="h-5 w-5"
                   checked={days.includes(i)}
-                  onChange={(e) => setDays((prev) => (e.target.checked ? [...prev, i].sort() : prev.filter((d) => d !== i)))}
+                  onChange={(e) =>
+                    setDays((prev) => (e.target.checked ? [...prev, i].sort() : prev.filter((d) => d !== i)))
+                  }
                 />
                 {label}
               </label>
             ))}
           </div>
-          {fields["schedule.days"] ? <p className="mt-1 text-sm font-semibold text-danger">{fields["schedule.days"]}</p> : null}
+          {fields["schedule.days"] ? (
+            <p className="mt-1 text-sm font-semibold text-danger">{fields["schedule.days"]}</p>
+          ) : null}
         </fieldset>
 
-        <Field id="startDate" name="startDate" type="date" label="Start date" defaultValue={initial?.schedule.startDate ?? istDayKey(new Date())} required />
-        <Field id="endDate" name="endDate" type="date" label="End date (optional)" defaultValue={initial?.schedule.endDate ?? ""} />
+        <Field
+          id="startDate"
+          name="startDate"
+          type="date"
+          label="Start date"
+          defaultValue={initial?.schedule.startDate ?? istDayKey(new Date())}
+          required
+        />
+        <Field
+          id="endDate"
+          name="endDate"
+          type="date"
+          label="End date (optional)"
+          defaultValue={initial?.schedule.endDate ?? ""}
+        />
         <div className="md:col-span-2">
-          <TextArea id="notes" name="notes" label="Notes (kept encrypted)" defaultValue={initial?.notes ?? ""} maxLength={500} />
+          <TextArea
+            id="notes"
+            name="notes"
+            label="Notes (kept encrypted)"
+            defaultValue={initial?.notes ?? ""}
+            maxLength={500}
+          />
         </div>
         <div className="flex flex-wrap gap-2 md:col-span-2">
           <Button type="submit" size="lg" disabled={busy}>
@@ -186,7 +270,10 @@ export function MedicinesManager({ canEdit }: { canEdit: boolean }) {
 
   async function restock(med: MedView, add: number) {
     try {
-      await api(`/api/medications/${encodeURIComponent(med.id)}`, { method: "PATCH", body: { stock: (med.stock ?? 0) + add } });
+      await api(`/api/medications/${encodeURIComponent(med.id)}`, {
+        method: "PATCH",
+        body: { stock: (med.stock ?? 0) + add },
+      });
       setNotice(`Added ${add} to ${med.name}.`);
       await load();
     } catch (err) {
@@ -217,7 +304,10 @@ export function MedicinesManager({ canEdit }: { canEdit: boolean }) {
         />
       ) : null}
       {meds.length === 0 ? (
-        <EmptyState title="No medicines yet" action={canEdit ? <Button onClick={() => setEditing("new")}>Add the first medicine</Button> : null}>
+        <EmptyState
+          title="No medicines yet"
+          action={canEdit ? <Button onClick={() => setEditing("new")}>Add the first medicine</Button> : null}
+        >
           {canEdit ? "Add one by hand, or scan a prescription." : "The caretaker has not added any medicines yet."}
         </EmptyState>
       ) : (
@@ -238,7 +328,9 @@ export function MedicinesManager({ canEdit }: { canEdit: boolean }) {
                 {m.stock !== null ? (
                   <p>
                     {m.stock} in stock
-                    {m.forecast?.daysLeft !== null && m.forecast ? ` · about ${m.forecast.daysLeft} day(s) left` : ""}{" "}
+                    {m.forecast?.daysLeft !== null && m.forecast
+                      ? ` · about ${m.forecast.daysLeft} day(s) left`
+                      : ""}{" "}
                     {m.forecast?.needsRefill ? <Badge tone="warn">Refill soon</Badge> : null}
                   </p>
                 ) : null}

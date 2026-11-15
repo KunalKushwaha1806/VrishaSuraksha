@@ -5,7 +5,9 @@ import { can } from "@/lib/domain/permissions";
 
 export const GET = route({ permission: "voice:send" }, async ({ auth }) => {
   const notes = await listVoiceNotes(auth.circle.id);
-  return { voiceNotes: can(auth.member.role, "voice:listen") ? notes : notes.filter((n) => n.fromMemberId === auth.member.id) };
+  return {
+    voiceNotes: can(auth.member.role, "voice:listen") ? notes : notes.filter((n) => n.fromMemberId === auth.member.id),
+  };
 });
 
 /** A family member uploads a short (15 s max) voice reminder. Stored encrypted. */

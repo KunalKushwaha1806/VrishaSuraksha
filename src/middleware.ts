@@ -46,7 +46,10 @@ export function middleware(req: NextRequest) {
 
   if (pathname.startsWith("/api/")) {
     if (MUTATING.has(req.method) && !CSRF_EXEMPT.some((p) => pathname.startsWith(p)) && !sameOrigin(req)) {
-      return NextResponse.json({ error: { code: "forbidden", message: "Cross-site request blocked." } }, { status: 403 });
+      return NextResponse.json(
+        { error: { code: "forbidden", message: "Cross-site request blocked." } },
+        { status: 403 },
+      );
     }
     const res = NextResponse.next();
     res.headers.set("Cache-Control", "no-store");

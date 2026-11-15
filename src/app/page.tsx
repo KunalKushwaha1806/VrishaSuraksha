@@ -52,8 +52,8 @@ export default function Home() {
         </h1>
 
         <p className="mt-5 text-lg sm:text-xl text-muted leading-relaxed max-w-2xl mx-auto">
-          A shared, passcode-protected healthcare ecosystem where an elder, caretakers, and family manage
-          medication schedules, monitor adherence, track doctor appointments, and receive proactive reminders.
+          A shared, passcode-protected healthcare ecosystem where an elder, caretakers, and family manage medication
+          schedules, monitor adherence, track doctor appointments, and receive proactive reminders.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
@@ -102,9 +102,13 @@ export default function Home() {
         <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-muted">
           <p>© 2026 VridhaSuraksha · Built with Next.js 15, PostgreSQL & Prisma, Google Gemini 2.5, and Resend.</p>
           <div className="flex items-center gap-4">
-            <a href="https://github.com" className="hover:underline">Documentation</a>
+            <a href="https://github.com" className="hover:underline">
+              Documentation
+            </a>
             <span>·</span>
-            <a href="/app/emergency" className="hover:underline">Emergency Card Demo</a>
+            <a href="/app/emergency" className="hover:underline">
+              Emergency Card Demo
+            </a>
           </div>
         </div>
       </footer>

@@ -43,9 +43,31 @@ export function CreateCircleForm() {
   return (
     <form onSubmit={(e) => submit(e)} className="space-y-4" noValidate>
       {error ? <Notice tone="danger">{error}</Notice> : null}
-      <Field id="elderName" name="elderName" label="Elder's name" autoComplete="name" required error={fields.elderName} />
-      <Field id="circleName" name="circleName" label="Circle name" placeholder="e.g. Sharma family" required error={fields.circleName} />
-      <Field id="email" name="email" type="email" label="Elder's email (for reminders)" autoComplete="email" required error={fields.email} />
+      <Field
+        id="elderName"
+        name="elderName"
+        label="Elder's name"
+        autoComplete="name"
+        required
+        error={fields.elderName}
+      />
+      <Field
+        id="circleName"
+        name="circleName"
+        label="Circle name"
+        placeholder="e.g. Sharma family"
+        required
+        error={fields.circleName}
+      />
+      <Field
+        id="email"
+        name="email"
+        type="email"
+        label="Elder's email (for reminders)"
+        autoComplete="email"
+        required
+        error={fields.email}
+      />
       <Field
         id="passcode"
         name="passcode"
@@ -70,11 +92,44 @@ export function JoinCircleForm() {
   return (
     <form onSubmit={(e) => submit(e)} className="space-y-4" noValidate>
       {error ? <Notice tone="danger">{error}</Notice> : null}
-      <Field id="circleCode" name="circleCode" label="Circle code" placeholder="6 letters or numbers" autoCapitalize="characters" required error={fields.circleCode} />
-      <Field id="inviteCode" name="inviteCode" label="Invite passcode" hint="The one-time code the elder or caretaker gave you." autoCapitalize="characters" required error={fields.inviteCode} />
+      <Field
+        id="circleCode"
+        name="circleCode"
+        label="Circle code"
+        placeholder="6 letters or numbers"
+        autoCapitalize="characters"
+        required
+        error={fields.circleCode}
+      />
+      <Field
+        id="inviteCode"
+        name="inviteCode"
+        label="Invite passcode"
+        hint="The one-time code the elder or caretaker gave you."
+        autoCapitalize="characters"
+        required
+        error={fields.inviteCode}
+      />
       <Field id="name" name="name" label="Your name" autoComplete="name" required error={fields.name} />
-      <Field id="email" name="email" type="email" label="Your email" autoComplete="email" required error={fields.email} />
-      <Field id="passcode" name="passcode" type="password" label="Choose your own passcode" hint="At least 6 characters." autoComplete="new-password" required error={fields.passcode} />
+      <Field
+        id="email"
+        name="email"
+        type="email"
+        label="Your email"
+        autoComplete="email"
+        required
+        error={fields.email}
+      />
+      <Field
+        id="passcode"
+        name="passcode"
+        type="password"
+        label="Choose your own passcode"
+        hint="At least 6 characters."
+        autoComplete="new-password"
+        required
+        error={fields.passcode}
+      />
       <LanguageSelect />
       <Button type="submit" size="lg" className="w-full" disabled={busy}>
         {busy ? "Joining…" : "Join circle"}
@@ -90,14 +145,32 @@ export function LoginForm() {
     <form onSubmit={(e) => submit(e)} className="space-y-4" noValidate>
       {expired && !error ? <Notice tone="info">Your session ended. Please sign in again.</Notice> : null}
       {error ? <Notice tone="danger">{error}</Notice> : null}
-      <Field id="circleCode" name="circleCode" label="Circle code" autoCapitalize="characters" required error={fields.circleCode} />
+      <Field
+        id="circleCode"
+        name="circleCode"
+        label="Circle code"
+        autoCapitalize="characters"
+        required
+        error={fields.circleCode}
+      />
       <Field id="email" name="email" type="email" label="Email" autoComplete="email" required error={fields.email} />
-      <Field id="passcode" name="passcode" type="password" label="Passcode" autoComplete="current-password" required error={fields.passcode} />
+      <Field
+        id="passcode"
+        name="passcode"
+        type="password"
+        label="Passcode"
+        autoComplete="current-password"
+        required
+        error={fields.passcode}
+      />
       <Button type="submit" size="lg" className="w-full" disabled={busy}>
         {busy ? "Signing in…" : "Sign in"}
       </Button>
       <p className="text-center text-muted">
-        New here? <Link href="/join" className="font-semibold text-brand underline">Join with an invite</Link>
+        New here?{" "}
+        <Link href="/join" className="font-semibold text-brand underline">
+          Join with an invite
+        </Link>
       </p>
     </form>
   );

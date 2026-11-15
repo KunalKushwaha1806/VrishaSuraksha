@@ -12,7 +12,6 @@ export function requireRole(member: Pick<Member, "role">, ...allowed: Role[]): v
   }
 }
 
-
 /** Error with an HTTP status and a stable machine-readable code. */
 export class ApiError extends Error {
   constructor(
@@ -60,7 +59,10 @@ export async function readJson(req: NextRequest, maxBytes: number): Promise<unkn
 
 export function toErrorResponse(err: unknown): NextResponse {
   if (err instanceof ApiError) {
-    return NextResponse.json({ error: { code: err.code, message: err.message, ...err.details } }, { status: err.status });
+    return NextResponse.json(
+      { error: { code: err.code, message: err.message, ...err.details } },
+      { status: err.status },
+    );
   }
   log.error("Unhandled API error", { error: errorMessage(err) });
   return NextResponse.json(

@@ -34,7 +34,9 @@ const REASON_TEXT: Record<MissedReason, string> = {
 async function recentIntakes(circleId: string, med: Medication, excludeDoseId: string, now: Date): Promise<string[]> {
   const db = await getDb();
   const today = istDayKey(now);
-  const doses = await db.query<DoseEvent>(C.doses(circleId), { where: [["dayKey", "in", [addDays(today, -1), today]]] });
+  const doses = await db.query<DoseEvent>(C.doses(circleId), {
+    where: [["dayKey", "in", [addDays(today, -1), today]]],
+  });
   return doses
     .filter((d) => d.medicationId === med.id && d.id !== excludeDoseId && d.status === "TAKEN" && d.loggedAt)
     .map((d) => d.loggedAt as string);
@@ -56,7 +58,15 @@ async function addSymptom(circleId: string, actor: Member, kind: SymptomEntry["k
 }
 
 /** Each missed-dose reason triggers a different, proportionate response. */
-async function triage(circle: Circle, actor: Member, elderName: string, dose: DoseEvent, med: Medication, reason: MissedReason, note?: string) {
+async function triage(
+  circle: Circle,
+  actor: Member,
+  elderName: string,
+  dose: DoseEvent,
+  med: Medication,
+  reason: MissedReason,
+  note?: string,
+) {
   const db = await getDb();
   const when = formatTime(dose.scheduledFor);
   switch (reason) {
@@ -71,7 +81,13 @@ async function triage(circle: Circle, actor: Member, elderName: string, dose: Do
       });
       return;
     case "side_effect":
-      await addSymptom(circle.id, actor, "side_effect", note ?? `Trouble with ${med.name}; dose at ${when} not taken.`, dose);
+      await addSymptom(
+        circle.id,
+        actor,
+        "side_effect",
+        note ?? `Trouble with ${med.name}; dose at ${when} not taken.`,
+        dose,
+      );
       await notify(circle.id, {
         audience: "caretakers",
         subject: `${elderName} reported trouble with ${med.name}`,
@@ -102,7 +118,8 @@ export async function logDose(
   if (!dose) throw fail.notFound("Dose not found.");
   const med = await db.get<Medication>(C.medications(circle.id), dose.medicationId);
   if (!med) throw fail.notFound("Medicine not found.");
-  if (dose.status === "TAKEN") throw fail.conflict("This dose is already marked as taken.", { reason: "already_taken" });
+  if (dose.status === "TAKEN")
+    throw fail.conflict("This dose is already marked as taken.", { reason: "already_taken" });
   if (dose.scheduledFor > new Date(now.getTime() + 3 * 60 * 60_000).toISOString() && input.status === "TAKEN") {
     throw fail.badRequest("This dose is not due yet.");
   }
@@ -111,7 +128,10 @@ export async function logDose(
   if (input.status === "TAKEN") {
     const conflictAt = findDoubleDose(await recentIntakes(circle.id, med, dose.id, now), now, med.schedule.times);
     if (conflictAt && !input.confirmDouble) {
-      throw fail.conflict("This medicine was already taken a short while ago.", { reason: "double_dose", lastTakenAt: conflictAt });
+      throw fail.conflict("This medicine was already taken a short while ago.", {
+        reason: "double_dose",
+        lastTakenAt: conflictAt,
+      });
     }
     doubleDoseConfirmed = Boolean(conflictAt);
   }
@@ -120,7 +140,8 @@ export async function logDose(
     // Firestore requires every read in a transaction to happen before any write.
     const fresh = await tx.get<DoseEvent>(C.doses(circle.id), doseId);
     const freshMed = await tx.get<Medication>(C.medications(circle.id), med.id);
-    if (!fresh || fresh.status === "TAKEN") throw fail.conflict("This dose was just logged by someone else.", { reason: "already_taken" });
+    if (!fresh || fresh.status === "TAKEN")
+      throw fail.conflict("This dose was just logged by someone else.", { reason: "already_taken" });
     const patch: Partial<DoseEvent> = {
       status: input.status,
       loggedById: actor.id,
@@ -141,11 +162,23 @@ export async function logDose(
   await cancelJobs(db, "doseId", doseId);
   invalidateCircle(circle.id);
 
-  const elder = actor.id === circle.elderMemberId ? actor : await db.get<Member>(C.members(circle.id), circle.elderMemberId);
+  const elder =
+    actor.id === circle.elderMemberId ? actor : await db.get<Member>(C.members(circle.id), circle.elderMemberId);
   const elderName = elder?.name ?? "The elder";
   const onBehalf = actor.id !== circle.elderMemberId ? ` on behalf of ${elderName}` : "";
-  const verb = input.status === "TAKEN" ? "logged as taken" : input.status === "SKIPPED" ? "logged as skipped" : `logged as missed (${REASON_TEXT[input.reason ?? "forgot"]})`;
-  await logActivity(circle.id, actor, `${med.name} ${formatTime(dose.scheduledFor)} ${verb}${onBehalf}`, "dose", doseId);
+  const verb =
+    input.status === "TAKEN"
+      ? "logged as taken"
+      : input.status === "SKIPPED"
+        ? "logged as skipped"
+        : `logged as missed (${REASON_TEXT[input.reason ?? "forgot"]})`;
+  await logActivity(
+    circle.id,
+    actor,
+    `${med.name} ${formatTime(dose.scheduledFor)} ${verb}${onBehalf}`,
+    "dose",
+    doseId,
+  );
 
   if (doubleDoseConfirmed) {
     await notify(circle.id, {

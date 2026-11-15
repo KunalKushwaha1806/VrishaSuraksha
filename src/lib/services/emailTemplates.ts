@@ -2,8 +2,7 @@ import type { EmailMessage } from "../email";
 import { env } from "../env";
 import type { Lang } from "../models";
 
-const DISCLAIMER =
-  "VridhaSuraksha supports daily routines. It does not replace advice from a doctor or pharmacist.";
+const DISCLAIMER = "VridhaSuraksha supports daily routines. It does not replace advice from a doctor or pharmacist.";
 
 export function escapeHtml(value: string): string {
   return value

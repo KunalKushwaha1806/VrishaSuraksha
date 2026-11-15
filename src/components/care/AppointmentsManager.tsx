@@ -21,7 +21,15 @@ function toLocalInput(iso: string): string {
   return d.toISOString().slice(0, 16);
 }
 
-function AppointmentForm({ initial, onSaved, onCancel }: { initial: Appt | null; onSaved: () => void; onCancel: () => void }) {
+function AppointmentForm({
+  initial,
+  onSaved,
+  onCancel,
+}: {
+  initial: Appt | null;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -75,16 +83,32 @@ function AppointmentForm({ initial, onSaved, onCancel }: { initial: Appt | null;
         <fieldset>
           <legend className="text-base font-semibold">Email reminders</legend>
           <label className="mt-2 flex min-h-12 items-center gap-2">
-            <input type="checkbox" name="remind24" className="h-5 w-5" defaultChecked={initial ? initial.reminderOffsetsMin.includes(1440) : true} />
+            <input
+              type="checkbox"
+              name="remind24"
+              className="h-5 w-5"
+              defaultChecked={initial ? initial.reminderOffsetsMin.includes(1440) : true}
+            />
             One day before
           </label>
           <label className="flex min-h-12 items-center gap-2">
-            <input type="checkbox" name="remind2" className="h-5 w-5" defaultChecked={initial ? initial.reminderOffsetsMin.includes(120) : true} />
+            <input
+              type="checkbox"
+              name="remind2"
+              className="h-5 w-5"
+              defaultChecked={initial ? initial.reminderOffsetsMin.includes(120) : true}
+            />
             Two hours before
           </label>
         </fieldset>
         <div className="md:col-span-2">
-          <TextArea id="notes" name="notes" label="Notes (kept encrypted)" defaultValue={initial?.notes ?? ""} maxLength={500} />
+          <TextArea
+            id="notes"
+            name="notes"
+            label="Notes (kept encrypted)"
+            defaultValue={initial?.notes ?? ""}
+            maxLength={500}
+          />
         </div>
         <div className="flex gap-2 md:col-span-2">
           <Button type="submit" size="lg" disabled={busy}>
@@ -119,7 +143,9 @@ export function AppointmentsManager({ canEdit, canBrief }: { canEdit: boolean; c
 
   async function remove(a: Appt) {
     if (!window.confirm(`Remove the visit with ${a.doctor}?`)) return;
-    await api(`/api/appointments/${encodeURIComponent(a.id)}`, { method: "DELETE" }).catch((err) => setError(errorText(err)));
+    await api(`/api/appointments/${encodeURIComponent(a.id)}`, { method: "DELETE" }).catch((err) =>
+      setError(errorText(err)),
+    );
     await load();
   }
 
@@ -147,7 +173,10 @@ export function AppointmentsManager({ canEdit, canBrief }: { canEdit: boolean; c
         />
       ) : null}
       {upcoming.length === 0 ? (
-        <EmptyState title="No upcoming visits" action={canEdit ? <Button onClick={() => setEditing("new")}>Add a visit</Button> : null} />
+        <EmptyState
+          title="No upcoming visits"
+          action={canEdit ? <Button onClick={() => setEditing("new")}>Add a visit</Button> : null}
+        />
       ) : (
         <ul className="space-y-3">
           {upcoming.map((a) => (
@@ -159,7 +188,10 @@ export function AppointmentsManager({ canEdit, canBrief }: { canEdit: boolean; c
                 {a.notes ? <p>{a.notes}</p> : null}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {canBrief ? (
-                    <Link className="inline-flex min-h-12 items-center font-semibold text-brand underline" href={`/app/brief?appointment=${encodeURIComponent(a.id)}`}>
+                    <Link
+                      className="inline-flex min-h-12 items-center font-semibold text-brand underline"
+                      href={`/app/brief?appointment=${encodeURIComponent(a.id)}`}
+                    >
                       Prepare doctor brief
                     </Link>
                   ) : null}

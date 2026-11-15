@@ -122,4 +122,3 @@ export function requireRole(member: Pick<Member, "role">, ...allowed: Role[]): v
     throw new Error(`Unauthorized role: requires one of ${allowed.join(", ")}, got ${member.role}`);
   }
 }
-

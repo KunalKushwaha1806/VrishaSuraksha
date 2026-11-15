@@ -41,10 +41,7 @@ export function FamilyHome() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={`How ${elderFirst} is doing`}
-        subtitle={`${data.circle.name} · Family Circle`}
-      />
+      <PageHeader title={`How ${elderFirst} is doing`} subtitle={`${data.circle.name} · Family Circle`} />
 
       {/* Streak Hero Card */}
       <Card className="relative overflow-hidden border-2 border-brand/40 bg-linear-to-br from-amber-500/10 via-brand/5 to-surface shadow-md">
@@ -169,7 +166,9 @@ export function FamilyHome() {
                   <div className="space-y-0.5">
                     <p className="font-bold text-base text-ink">{r.name}</p>
                     <p className="text-sm text-danger font-semibold">
-                      {r.stock === 0 ? "⚠️ Out of stock" : `⚠️ Runs out in about ${r.daysLeft} day${r.daysLeft === 1 ? "" : "s"}`}
+                      {r.stock === 0
+                        ? "⚠️ Out of stock"
+                        : `⚠️ Runs out in about ${r.daysLeft} day${r.daysLeft === 1 ? "" : "s"}`}
                     </p>
                   </div>
                   <ClaimRefillButton medicationId={r.medicationId} claimedByName={r.claimedByName} onDone={refresh} />

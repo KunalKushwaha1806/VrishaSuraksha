@@ -25,7 +25,8 @@ export default async function ActionPage({ params }: { params: Promise<{ token: 
   const { token } = await params;
   const claims = await verifyActionToken(token);
   if (!claims) return <Shell title="This link has expired">Please open the app to continue.</Shell>;
-  if (await isActionTokenUsed(claims.jti)) return <Shell title="Already done">This link has been used. Thank you!</Shell>;
+  if (await isActionTokenUsed(claims.jti))
+    return <Shell title="Already done">This link has been used. Thank you!</Shell>;
 
   const db = await getDb();
   const member = await db.get<Member>(C.members(claims.circleId), claims.memberId);
@@ -45,7 +46,8 @@ export default async function ActionPage({ params }: { params: Promise<{ token: 
 
   const dose = await db.get<DoseEvent>(C.doses(claims.circleId), claims.ref);
   if (!dose) return <Shell title="This dose is no longer scheduled" />;
-  if (dose.status === "TAKEN") return <Shell title={hi ? "यह खुराक पहले ही दर्ज है" : "This dose is already logged as taken"} />;
+  if (dose.status === "TAKEN")
+    return <Shell title={hi ? "यह खुराक पहले ही दर्ज है" : "This dose is already logged as taken"} />;
   return (
     <Shell title={`${dose.medName} · ${formatTime(dose.scheduledFor)}`}>
       <ActionButtons token={token} kind="dose" lang={member.language} onBehalf={member.role !== "ELDER"} />

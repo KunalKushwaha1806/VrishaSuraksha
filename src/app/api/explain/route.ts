@@ -18,7 +18,9 @@ export const POST = route({ permission: "explain:use", body: explainSchema, perM
   if (cached) return { text: cached, cached: true };
   const text = await explainMedicine(med.name, body.language);
   const db = await getDb();
-  await db.update(C.medications(auth.circle.id), med.id, { explanations: { ...med.explanations, [body.language]: text } });
+  await db.update(C.medications(auth.circle.id), med.id, {
+    explanations: { ...med.explanations, [body.language]: text },
+  });
   invalidateCircle(auth.circle.id);
   return { text, cached: false };
 });

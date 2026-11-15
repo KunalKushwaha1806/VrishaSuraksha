@@ -1,7 +1,15 @@
 import { decryptText } from "../crypto";
 import { getDb } from "../db";
 import { adherence, adherenceByMedication } from "../domain/adherence";
-import { C, type Appointment, type Circle, type DoseEvent, type Medication, type MissedReason, type SymptomEntry } from "../models";
+import {
+  C,
+  type Appointment,
+  type Circle,
+  type DoseEvent,
+  type Medication,
+  type MissedReason,
+  type SymptomEntry,
+} from "../models";
 import { addDays, formatDate, formatDateTime, istDayKey } from "../time";
 
 const PERIOD_DAYS = 30;
@@ -34,7 +42,12 @@ export async function buildBrief(circle: Circle, appointmentId: string | null, n
     periodLabel: `${formatDate(sinceIso)} to ${formatDate(now.toISOString())}`,
     elderName: elder?.name ?? "",
     appointment: appointment
-      ? { doctor: appointment.doctor, place: appointment.place, when: formatDateTime(appointment.startsAt), notes: decryptText(appointment.notesEnc) }
+      ? {
+          doctor: appointment.doctor,
+          place: appointment.place,
+          when: formatDateTime(appointment.startsAt),
+          notes: decryptText(appointment.notesEnc),
+        }
       : null,
     overall,
     medications: meds
@@ -51,7 +64,11 @@ export async function buildBrief(circle: Circle, appointmentId: string | null, n
       .filter((d) => d.status === "MISSED")
       .sort((a, b) => b.scheduledFor.localeCompare(a.scheduledFor))
       .slice(0, 15)
-      .map((d) => ({ when: formatDateTime(d.scheduledFor), medName: d.medName, reason: d.missedReason ? REASON_LABEL[d.missedReason] : "no reason given" })),
+      .map((d) => ({
+        when: formatDateTime(d.scheduledFor),
+        medName: d.medName,
+        reason: d.missedReason ? REASON_LABEL[d.missedReason] : "no reason given",
+      })),
     symptoms: symptoms
       .filter((s) => s.createdAt >= sinceIso)
       .map((s) => ({
@@ -67,9 +84,7 @@ export type Brief = Awaited<ReturnType<typeof buildBrief>>;
 
 /** Removes emails, phone numbers and the elder's name from free text before it leaves the server. */
 export function redact(text: string, names: string[]): string {
-  let out = text
-    .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[email]")
-    .replace(/\+?\d[\d\s-]{7,}\d/g, "[phone]");
+  let out = text.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[email]").replace(/\+?\d[\d\s-]{7,}\d/g, "[phone]");
   for (const name of names.filter((n) => n.trim().length > 1)) {
     out = out.split(name).join("[the patient]");
   }
@@ -80,9 +95,13 @@ export function redact(text: string, names: string[]): string {
 export function briefFacts(brief: Brief): string {
   const lines = [
     `Period: last ${PERIOD_DAYS} days. Overall adherence: ${brief.overall.percent ?? "n/a"}% (${brief.overall.taken} taken, ${brief.overall.missed} missed, ${brief.overall.skipped} skipped).`,
-    ...brief.medications.map((m) => `Medicine ${m.name} ${m.doseText}: adherence ${m.adherence ?? "n/a"}%, missed ${m.missed}.`),
+    ...brief.medications.map(
+      (m) => `Medicine ${m.name} ${m.doseText}: adherence ${m.adherence ?? "n/a"}%, missed ${m.missed}.`,
+    ),
     ...brief.missed.map((m) => `Missed ${m.medName}: ${m.reason}.`),
-    ...brief.symptoms.map((s) => `Reported (${s.kind.replace("_", " ")})${s.medName ? ` about ${s.medName}` : ""}: ${s.text.slice(0, 200)}`),
+    ...brief.symptoms.map(
+      (s) => `Reported (${s.kind.replace("_", " ")})${s.medName ? ` about ${s.medName}` : ""}: ${s.text.slice(0, 200)}`,
+    ),
   ];
   return redact(lines.join("\n"), [brief.elderName]);
 }

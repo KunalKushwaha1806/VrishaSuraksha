@@ -76,7 +76,11 @@ export function ClaimRefillButton({
       >
         I&apos;ll handle it
       </Button>
-      {error ? <span role="alert" className="text-sm text-danger">{error}</span> : null}
+      {error ? (
+        <span role="alert" className="text-sm text-danger">
+          {error}
+        </span>
+      ) : null}
     </span>
   );
 }

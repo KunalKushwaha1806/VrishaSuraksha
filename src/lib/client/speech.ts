@@ -81,7 +81,9 @@ export function speak(text: string, lang: Lang, onEnd?: () => void): void {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = speechLang(lang);
   u.rate = 0.9;
-  const voice = window.speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang === "hi" ? "hi" : "en-in"));
+  const voice = window.speechSynthesis
+    .getVoices()
+    .find((v) => v.lang.toLowerCase().startsWith(lang === "hi" ? "hi" : "en-in"));
   if (voice) u.voice = voice;
   u.onend = () => onEnd?.();
   window.speechSynthesis.speak(u);

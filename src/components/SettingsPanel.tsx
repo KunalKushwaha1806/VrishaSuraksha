@@ -6,7 +6,15 @@ import { api, errorText } from "@/lib/client/api";
 import type { Lang } from "@/lib/models";
 import { Button, Card, Field, Notice, PageHeader, SelectField } from "./ui";
 
-export function SettingsPanel({ language, isElder, circleName }: { language: Lang; isElder: boolean; circleName: string }) {
+export function SettingsPanel({
+  language,
+  isElder,
+  circleName,
+}: {
+  language: Lang;
+  isElder: boolean;
+  circleName: string;
+}) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ tone: "ok" | "danger"; text: string } | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -51,18 +59,29 @@ export function SettingsPanel({ language, isElder, circleName }: { language: Lan
         <>
           <Card>
             <h2 className="text-2xl font-bold">Your data</h2>
-            <p className="mt-1 text-muted">Download everything this circle holds about you, including notes, as a file.</p>
-            <a href="/api/export" className="mt-3 inline-flex min-h-12 items-center rounded-2xl bg-brand px-4 font-semibold text-brand-ink">
+            <p className="mt-1 text-muted">
+              Download everything this circle holds about you, including notes, as a file.
+            </p>
+            <a
+              href="/api/export"
+              className="mt-3 inline-flex min-h-12 items-center rounded-2xl bg-brand px-4 font-semibold text-brand-ink"
+            >
               Download my data
             </a>
           </Card>
           <Card className="border-danger">
             <h2 className="text-2xl font-bold text-danger">Delete everything</h2>
             <p className="mt-1 text-muted">
-              Removes the circle, all members, medicines, logs, voice notes and pending reminders. This cannot be undone.
+              Removes the circle, all members, medicines, logs, voice notes and pending reminders. This cannot be
+              undone.
             </p>
             <form onSubmit={deleteAll} className="mt-3 space-y-3">
-              <Field id="confirm" label={`Type “${circleName}” to confirm`} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              <Field
+                id="confirm"
+                label={`Type “${circleName}” to confirm`}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+              />
               <Button type="submit" variant="danger" disabled={confirm !== circleName}>
                 Delete my circle and data
               </Button>

@@ -46,7 +46,8 @@ async function generateJson<T>(schema: ZodType<T>, parts: Part[], systemInstruct
       log.warn("Gemini output failed validation", { attempt });
     } catch (err) {
       const message = errorMessage(err);
-      if (/429|quota|RESOURCE_EXHAUSTED/i.test(message)) throw fail.unavailable("AI help is busy right now. Please try again in a minute.");
+      if (/429|quota|RESOURCE_EXHAUSTED/i.test(message))
+        throw fail.unavailable("AI help is busy right now. Please try again in a minute.");
       if (attempt === 2 || !(err instanceof SyntaxError)) {
         log.error("Gemini request failed", { attempt, error: message.slice(0, 200) });
         throw fail.unavailable("AI help could not answer just now. You can enter details by hand.");

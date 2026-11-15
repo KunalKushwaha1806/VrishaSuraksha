@@ -19,9 +19,17 @@ export const GET = route({ permission: "share:manage" }, async ({ auth }) => {
 });
 
 /** Elder-only: creates a time-limited, read-only emergency card link and its QR code. */
-export const POST = route({ permission: "share:manage", body: shareCreateSchema, perMinute: 10 }, async ({ auth, body }) => {
-  const { token, share } = await createShareToken(auth.circle, auth.member, body.hours);
-  const url = `${env().APP_URL}/e/${token}`;
-  const qrSvg = await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" });
-  return { url, qrDataUrl: `data:image/svg+xml;base64,${Buffer.from(qrSvg).toString("base64")}`, expiresAt: share.expiresAt, id: share.id };
-});
+export const POST = route(
+  { permission: "share:manage", body: shareCreateSchema, perMinute: 10 },
+  async ({ auth, body }) => {
+    const { token, share } = await createShareToken(auth.circle, auth.member, body.hours);
+    const url = `${env().APP_URL}/e/${token}`;
+    const qrSvg = await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" });
+    return {
+      url,
+      qrDataUrl: `data:image/svg+xml;base64,${Buffer.from(qrSvg).toString("base64")}`,
+      expiresAt: share.expiresAt,
+      id: share.id,
+    };
+  },
+);

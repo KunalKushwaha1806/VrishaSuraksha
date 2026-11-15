@@ -11,8 +11,10 @@ type Variant = "primary" | "secondary" | "ghost" | "danger" | "success";
 type Size = "sm" | "md" | "lg" | "xl";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-brand text-brand-ink hover:bg-brand-strong shadow-sm hover:shadow active:scale-[0.99] border border-transparent",
-  secondary: "bg-surface text-ink border border-line hover:border-brand/60 shadow-xs hover:shadow-sm active:scale-[0.99]",
+  primary:
+    "bg-brand text-brand-ink hover:bg-brand-strong shadow-sm hover:shadow active:scale-[0.99] border border-transparent",
+  secondary:
+    "bg-surface text-ink border border-line hover:border-brand/60 shadow-xs hover:shadow-sm active:scale-[0.99]",
   ghost: "bg-transparent text-ink hover:bg-surface-2 border border-transparent active:scale-[0.99]",
   danger: "bg-danger-bg text-danger border border-danger/30 hover:bg-danger-bg/80 active:scale-[0.99]",
   success: "bg-ok-bg text-ok border border-ok/30 hover:bg-ok-bg/80 active:scale-[0.99]",
@@ -98,7 +100,13 @@ export function Field({
           {hint}
         </p>
       ) : null}
-      <input id={id} aria-invalid={error ? true : undefined} aria-describedby={describedBy} className={inputClass} {...props} />
+      <input
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        className={inputClass}
+        {...props}
+      />
       {error ? (
         <p id={`${id}-error`} className="mt-1 text-sm font-semibold text-danger">
           {error}
@@ -172,7 +180,12 @@ export function Badge({ tone = "info", children }: { tone?: "ok" | "warn" | "dan
     info: "bg-surface-2 text-ink border-line",
   }[tone];
   return (
-    <span className={cx("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-bold tracking-wide", styles)}>
+    <span
+      className={cx(
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-bold tracking-wide",
+        styles,
+      )}
+    >
       <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
       {children}
     </span>

@@ -13,7 +13,8 @@ const PEOPLE = [
     avatar: "👴",
     badge: "Voice-First · Hindi / English",
     badgeColor: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200",
-    detail: "High-contrast, large-button interface. Speaks with Gemini for medicine explanations, logs by voice, and controls privacy.",
+    detail:
+      "High-contrast, large-button interface. Speaks with Gemini for medicine explanations, logs by voice, and controls privacy.",
     target: "/app/elder",
   },
   {
@@ -24,7 +25,8 @@ const PEOPLE = [
     avatar: "👩‍⚕️",
     badge: "Clinical Control · AI Scanner",
     badgeColor: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200",
-    detail: "Manages dose schedules, scans paper prescriptions with Gemini Vision, logs doses on behalf with audit notes, and tracks doctor visits.",
+    detail:
+      "Manages dose schedules, scans paper prescriptions with Gemini Vision, logs doses on behalf with audit notes, and tracks doctor visits.",
     target: "/app/care",
   },
   {
@@ -36,7 +38,8 @@ const PEOPLE = [
     avatar: "👦",
     badge: "Refill Champion · Streak",
     badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200",
-    detail: "Monitors Dadaji's daily adherence streaks without guilt feeds. Receives low-stock forecasts and claims refills with one tap.",
+    detail:
+      "Monitors Dadaji's daily adherence streaks without guilt feeds. Receives low-stock forecasts and claims refills with one tap.",
     target: "/app/family",
   },
   {
@@ -48,7 +51,8 @@ const PEOPLE = [
     avatar: "👧",
     badge: "Family Voice · Hearts",
     badgeColor: "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-200",
-    detail: "Records short 15-second voice notes that play on Dadaji's phone when a dose is due, and sends love reactions.",
+    detail:
+      "Records short 15-second voice notes that play on Dadaji's phone when a dose is due, and sends love reactions.",
     target: "/app/family",
   },
 ] as const;
@@ -111,22 +115,20 @@ export function DemoChooser() {
                       <h3 className="text-xl font-extrabold text-ink group-hover:text-brand transition-colors">
                         {p.label}
                       </h3>
-                      <p className="text-sm font-semibold text-muted">
-                        {p.title}
-                      </p>
+                      <p className="text-sm font-semibold text-muted">{p.title}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${p.badgeColor}`}>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${p.badgeColor}`}
+                  >
                     {p.badge}
                   </span>
                 </div>
 
-                <p className="mt-3 text-sm text-muted leading-relaxed">
-                  {p.detail}
-                </p>
+                <p className="mt-3 text-sm text-muted leading-relaxed">{p.detail}</p>
               </div>
 
               <div className="mt-5 pt-3 border-t border-line/60 flex items-center justify-between text-sm font-bold text-brand">

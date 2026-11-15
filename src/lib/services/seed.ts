@@ -55,12 +55,59 @@ interface MedSeed {
 }
 
 const MEDS: MedSeed[] = [
-  { id: "demo-metformin", name: "Metformin", doseText: "500 mg", criticality: "normal", times: ["08:30", "20:30"], stock: 54, notes: "Take after food." },
-  { id: "demo-amlodipine", name: "Amlodipine", doseText: "5 mg", criticality: "high", times: ["09:00"], stock: 4, notes: "For blood pressure." },
-  { id: "demo-atorvastatin", name: "Atorvastatin", doseText: "10 mg", criticality: "normal", times: ["21:30"], stock: 25 },
-  { id: "demo-aspirin", name: "Ecosprin", doseText: "75 mg", criticality: "high", times: ["14:00"], stock: 28, notes: "After lunch." },
-  { id: "demo-pantoprazole", name: "Pantoprazole", doseText: "40 mg", criticality: "low", times: ["07:30"], stock: 30, notes: "Before breakfast." },
-  { id: "demo-vitd", name: "Vitamin D3", doseText: "60,000 IU", criticality: "low", times: ["10:00"], days: [0], stock: 6 },
+  {
+    id: "demo-metformin",
+    name: "Metformin",
+    doseText: "500 mg",
+    criticality: "normal",
+    times: ["08:30", "20:30"],
+    stock: 54,
+    notes: "Take after food.",
+  },
+  {
+    id: "demo-amlodipine",
+    name: "Amlodipine",
+    doseText: "5 mg",
+    criticality: "high",
+    times: ["09:00"],
+    stock: 4,
+    notes: "For blood pressure.",
+  },
+  {
+    id: "demo-atorvastatin",
+    name: "Atorvastatin",
+    doseText: "10 mg",
+    criticality: "normal",
+    times: ["21:30"],
+    stock: 25,
+  },
+  {
+    id: "demo-aspirin",
+    name: "Ecosprin",
+    doseText: "75 mg",
+    criticality: "high",
+    times: ["14:00"],
+    stock: 28,
+    notes: "After lunch.",
+  },
+  {
+    id: "demo-pantoprazole",
+    name: "Pantoprazole",
+    doseText: "40 mg",
+    criticality: "low",
+    times: ["07:30"],
+    stock: 30,
+    notes: "Before breakfast.",
+  },
+  {
+    id: "demo-vitd",
+    name: "Vitamin D3",
+    doseText: "60,000 IU",
+    criticality: "low",
+    times: ["10:00"],
+    days: [0],
+    stock: 6,
+  },
 ];
 
 /** Misses sprinkled through history: [days ago, medicine id, reason]. */
@@ -115,7 +162,9 @@ export async function seedDemo(now = new Date()): Promise<Circle> {
   const members = [
     member(DEMO_MEMBERS.elder, "Ramesh Sharma (Dadaji)", "elder", "ELDER", hash, { language: "hi" }),
     member(DEMO_MEMBERS.caretaker, "Sunita", "caretaker", "CARETAKER", hash),
-    member(DEMO_MEMBERS.arjun, "Arjun", "arjun", "FAMILY", hash, { visibility: { ...DEFAULT_FAMILY_VISIBILITY, missedReasons: true, symptoms: true } }),
+    member(DEMO_MEMBERS.arjun, "Arjun", "arjun", "FAMILY", hash, {
+      visibility: { ...DEFAULT_FAMILY_VISIBILITY, missedReasons: true, symptoms: true },
+    }),
     member(DEMO_MEMBERS.riya, "Riya", "riya", "FAMILY", hash),
   ];
   await Promise.all(members.map((m) => db.set(C.members(cid), m.id, m)));
@@ -143,7 +192,9 @@ export async function seedDemo(now = new Date()): Promise<Circle> {
   const doses: DoseEvent[] = [];
   for (const med of meds) {
     for (const occ of occurrencesBetween(med.schedule, historyStart, now)) {
-      const daysAgo = Math.round((istToUtc(today, "00:00").getTime() - istToUtc(occ.dayKey, "00:00").getTime()) / 86_400_000);
+      const daysAgo = Math.round(
+        (istToUtc(today, "00:00").getTime() - istToUtc(occ.dayKey, "00:00").getTime()) / 86_400_000,
+      );
       const miss = MISSES.find(([d, id]) => d === daysAgo && id === med.id);
       // Doses from the last three hours stay open so the demo always has something to log.
       if (occ.at.getTime() > now.getTime() - 3 * 3_600_000) {

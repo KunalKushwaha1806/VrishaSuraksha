@@ -55,25 +55,14 @@ export default async function VoicePlaybackPage({ params }: { params: Promise<{ 
           VridhaSuraksha · {circleName ? `${circleName} · ` : ""}Family Voice Reminder
         </p>
         <div className="mt-4 text-5xl">🎙️</div>
-        <h1 className="mt-4 text-2xl font-bold text-foreground">
-          Voice Note from {note.fromName}
-        </h1>
-        {medName ? (
-          <p className="mt-2 text-lg font-medium text-brand">
-            For: {medName}
-          </p>
-        ) : null}
+        <h1 className="mt-4 text-2xl font-bold text-foreground">Voice Note from {note.fromName}</h1>
+        {medName ? <p className="mt-2 text-lg font-medium text-brand">For: {medName}</p> : null}
         <p className="mt-1 text-sm text-muted-foreground">
           Recorded on {formatDateTime(note.createdAt)} ({note.durationSec}s)
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center">
-          <audio
-            controls
-            autoPlay
-            src={`/api/voice-notes/${note.id}`}
-            className="w-full max-w-md"
-          >
+          <audio controls autoPlay src={`/api/voice-notes/${note.id}`} className="w-full max-w-md">
             <track kind="captions" />
             Your browser does not support audio playback.
           </audio>

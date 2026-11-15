@@ -31,6 +31,13 @@ export async function logActivity(
 export async function logConsent(circleId: string, member: Pick<Member, "id" | "name">, change: string, byId: string) {
   const db = await getDb();
   const id = newId();
-  const entry: ConsentEntry = { id, memberId: member.id, memberName: member.name, change, byId, at: new Date().toISOString() };
+  const entry: ConsentEntry = {
+    id,
+    memberId: member.id,
+    memberName: member.name,
+    change,
+    byId,
+    at: new Date().toISOString(),
+  };
   await db.set(C.consent(circleId), id, entry);
 }

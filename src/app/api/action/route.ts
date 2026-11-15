@@ -38,6 +38,9 @@ export const POST = route({ public: true, body: actionSchema, perMinute: 20 }, a
     await logDose(circle, member, claims.ref, { status: "TAKEN" });
     return { done: "taken" };
   }
-  await logDose(circle, member, claims.ref, { status: "MISSED", reason: body.choice as "forgot" | "unwell" | "side_effect" | "ran_out" });
+  await logDose(circle, member, claims.ref, {
+    status: "MISSED",
+    reason: body.choice as "forgot" | "unwell" | "side_effect" | "ran_out",
+  });
   return { done: "reason" };
 });

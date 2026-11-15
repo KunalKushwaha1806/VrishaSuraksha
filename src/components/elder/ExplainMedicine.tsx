@@ -8,7 +8,17 @@ import type { Lang } from "@/lib/models";
 import { Button, Notice } from "../ui";
 
 /** "What is this medicine for?" with a spoken answer (Cloud TTS, or the phone's own voice). */
-export function ExplainMedicine({ medicationId, lang, d, serverVoice }: { medicationId: string; lang: Lang; d: Dict; serverVoice: boolean }) {
+export function ExplainMedicine({
+  medicationId,
+  lang,
+  d,
+  serverVoice,
+}: {
+  medicationId: string;
+  lang: Lang;
+  d: Dict;
+  serverVoice: boolean;
+}) {
   const [text, setText] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

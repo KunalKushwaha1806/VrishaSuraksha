@@ -54,7 +54,10 @@ export function weekdayOf(dayKey: string): number {
 
 /** Compact, Firestore-safe stamp used inside deterministic document ids. */
 export function compactStamp(date: Date): string {
-  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  return date
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
 }
 
 export function formatTime(iso: string, locale = "en-IN"): string {
@@ -75,7 +78,10 @@ export function formatDateTime(iso: string, locale = "en-IN"): string {
 }
 
 export function formatDate(iso: string, locale = "en-IN"): string {
-  return new Intl.DateTimeFormat(locale, { timeZone: TIME_ZONE, day: "numeric", month: "short", year: "numeric" }).format(
-    new Date(iso),
-  );
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: TIME_ZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(iso));
 }

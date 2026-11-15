@@ -24,17 +24,25 @@ export default async function BriefPage({ searchParams }: { searchParams: Promis
       <Card>
         <h2 className="text-xl font-bold">Adherence (last 30 days)</h2>
         <p className="mt-1 text-lg">
-          {brief.overall.percent === null ? "No doses due yet." : `${brief.overall.percent}% overall`} · {brief.overall.taken} taken ·{" "}
-          {brief.overall.missed} missed · {brief.overall.skipped} skipped by choice
+          {brief.overall.percent === null ? "No doses due yet." : `${brief.overall.percent}% overall`} ·{" "}
+          {brief.overall.taken} taken · {brief.overall.missed} missed · {brief.overall.skipped} skipped by choice
         </p>
         <table className="mt-3 w-full border-collapse text-left">
           <caption className="sr-only">Adherence by medicine</caption>
           <thead>
             <tr className="border-b border-line">
-              <th scope="col" className="py-2">Medicine</th>
-              <th scope="col" className="py-2">Schedule</th>
-              <th scope="col" className="py-2">Adherence</th>
-              <th scope="col" className="py-2">Missed</th>
+              <th scope="col" className="py-2">
+                Medicine
+              </th>
+              <th scope="col" className="py-2">
+                Schedule
+              </th>
+              <th scope="col" className="py-2">
+                Adherence
+              </th>
+              <th scope="col" className="py-2">
+                Missed
+              </th>
             </tr>
           </thead>
           <tbody>

@@ -30,7 +30,16 @@ const CIRCLE_CODES = "circleCodes";
 
 /** Public view of a member: never includes the passcode hash. */
 export function publicMember(m: Member) {
-  return { id: m.id, name: m.name, role: m.role, language: m.language, visibility: m.visibility, active: m.active, email: m.email, createdAt: m.createdAt };
+  return {
+    id: m.id,
+    name: m.name,
+    role: m.role,
+    language: m.language,
+    visibility: m.visibility,
+    active: m.active,
+    email: m.email,
+    createdAt: m.createdAt,
+  };
 }
 
 export async function findCircleByCode(code: string): Promise<Circle | null> {
@@ -104,7 +113,11 @@ export async function createCircle(input: {
 }
 
 /** Issues a one-time invite passcode. Only its hash is stored; the plain code is shown once. */
-export async function createInvite(circle: Circle, actor: Member, role: Invite["role"]): Promise<{ code: string; expiresAt: string }> {
+export async function createInvite(
+  circle: Circle,
+  actor: Member,
+  role: Invite["role"],
+): Promise<{ code: string; expiresAt: string }> {
   const db = await getDb();
   const code = humanCode(8);
   const invite: Invite = {
@@ -141,7 +154,9 @@ export async function joinCircle(input: {
   const circle = await findCircleByCode(input.circleCode);
   const nowIso = new Date().toISOString();
   const invites = circle
-    ? (await db.query<Invite>(C.invites(circle.id), { where: [["usedAt", "==", null]] })).filter((i) => i.expiresAt > nowIso)
+    ? (await db.query<Invite>(C.invites(circle.id), { where: [["usedAt", "==", null]] })).filter(
+        (i) => i.expiresAt > nowIso,
+      )
     : [];
 
   let match: Invite | null = null;
@@ -153,11 +168,16 @@ export async function joinCircle(input: {
   }
   if (!circle || !match) {
     await recordFailure(lockKey);
-    throw fail.badRequest("That circle code or invite passcode is not valid. Ask the elder or caretaker for a fresh invite.");
+    throw fail.badRequest(
+      "That circle code or invite passcode is not valid. Ask the elder or caretaker for a fresh invite.",
+    );
   }
 
-  const existing = await db.query<Member>(C.members(circle.id), { where: [["emailLower", "==", input.email.toLowerCase()]] });
-  if (existing.some((m) => m.active)) throw fail.conflict("Someone with this email is already in the circle. Please sign in instead.");
+  const existing = await db.query<Member>(C.members(circle.id), {
+    where: [["emailLower", "==", input.email.toLowerCase()]],
+  });
+  if (existing.some((m) => m.active))
+    throw fail.conflict("Someone with this email is already in the circle. Please sign in instead.");
 
   const member = buildMember({
     circleId: circle.id,
@@ -179,7 +199,12 @@ export async function joinCircle(input: {
 
   await clearFailures(lockKey);
   await logActivity(circle.id, member, `joined as ${member.role.toLowerCase()}`, "member", member.id);
-  await logConsent(circle.id, member, `joined with ${member.role === "FAMILY" ? "default family" : "full"} visibility`, member.id);
+  await logConsent(
+    circle.id,
+    member,
+    `joined with ${member.role === "FAMILY" ? "default family" : "full"} visibility`,
+    member.id,
+  );
   invalidateCircle(circle.id);
   return { circle, member };
 }

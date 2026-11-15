@@ -68,7 +68,10 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
   if (!features.email() || isUndeliverable(message.to)) {
     outbox.push(message);
     if (outbox.length > 200) outbox.shift();
-    log.info("Email captured (Resend/SMTP not configured or demo address)", { subject: message.subject, to: message.to });
+    log.info("Email captured (Resend/SMTP not configured or demo address)", {
+      subject: message.subject,
+      to: message.to,
+    });
     return;
   }
   if (e.RESEND_API_KEY) {

@@ -36,12 +36,34 @@ const LINKS: Record<Role, Array<{ href: string; label: string; icon?: string }>>
 };
 
 const ROLE_BADGE: Record<Role, { label: string; icon: string; style: string }> = {
-  ELDER: { label: "Dadaji / Elder", icon: "👴", style: "bg-amber-100/90 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200" },
-  CARETAKER: { label: "Caretaker", icon: "👩‍⚕️", style: "bg-blue-100/90 text-blue-900 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200" },
-  FAMILY: { label: "Family", icon: "👨‍👩‍👦", style: "bg-rose-100/90 text-rose-900 border-rose-300 dark:bg-rose-950/60 dark:text-rose-200" },
+  ELDER: {
+    label: "Dadaji / Elder",
+    icon: "👴",
+    style: "bg-amber-100/90 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200",
+  },
+  CARETAKER: {
+    label: "Caretaker",
+    icon: "👩‍⚕️",
+    style: "bg-blue-100/90 text-blue-900 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200",
+  },
+  FAMILY: {
+    label: "Family",
+    icon: "👨‍👩‍👦",
+    style: "bg-rose-100/90 text-rose-900 border-rose-300 dark:bg-rose-950/60 dark:text-rose-200",
+  },
 };
 
-export function AppNav({ role, name, circleName, isDemo }: { role: Role; name: string; circleName: string; isDemo: boolean }) {
+export function AppNav({
+  role,
+  name,
+  circleName,
+  isDemo,
+}: {
+  role: Role;
+  name: string;
+  circleName: string;
+  isDemo: boolean;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -70,7 +92,12 @@ export function AppNav({ role, name, circleName, isDemo }: { role: Role; name: s
             </div>
           </Link>
 
-          <span className={cx("hidden sm:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold", roleInfo.style)}>
+          <span
+            className={cx(
+              "hidden sm:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold",
+              roleInfo.style,
+            )}
+          >
             <span aria-hidden="true">{roleInfo.icon}</span> {roleInfo.label}
           </span>
         </div>
@@ -108,12 +135,14 @@ export function AppNav({ role, name, circleName, isDemo }: { role: Role; name: s
                     onClick={() => setOpen(false)}
                     className={cx(
                       "flex min-h-10 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition-all",
-                      active
-                        ? "bg-brand text-brand-ink shadow-xs"
-                        : "text-ink/80 hover:text-ink hover:bg-surface-2",
+                      active ? "bg-brand text-brand-ink shadow-xs" : "text-ink/80 hover:text-ink hover:bg-surface-2",
                     )}
                   >
-                    {l.icon ? <span className="text-sm opacity-80" aria-hidden="true">{l.icon}</span> : null}
+                    {l.icon ? (
+                      <span className="text-sm opacity-80" aria-hidden="true">
+                        {l.icon}
+                      </span>
+                    ) : null}
                     {l.label}
                   </Link>
                 </li>

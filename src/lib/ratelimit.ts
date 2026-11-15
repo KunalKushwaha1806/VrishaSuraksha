@@ -10,7 +10,12 @@ import { sha256 } from "./crypto";
  */
 const windows = new Map<string, { count: number; resetAt: number }>();
 
-export function hitLimit(key: string, limit: number, windowMs: number, now = Date.now()): { ok: boolean; retryAfterSec: number } {
+export function hitLimit(
+  key: string,
+  limit: number,
+  windowMs: number,
+  now = Date.now(),
+): { ok: boolean; retryAfterSec: number } {
   const w = windows.get(key);
   if (!w || w.resetAt <= now) {
     windows.set(key, { count: 1, resetAt: now + windowMs });

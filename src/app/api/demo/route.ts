@@ -11,7 +11,11 @@ export const POST = route({ public: true, body: demoLoginSchema, perMinute: 20 }
   if (!features.demo()) throw fail.notFound();
   await ensureDemo();
   const id =
-    body.role === "ELDER" ? DEMO_MEMBERS.elder : body.role === "CARETAKER" ? DEMO_MEMBERS.caretaker : DEMO_MEMBERS[body.member ?? "riya"];
+    body.role === "ELDER"
+      ? DEMO_MEMBERS.elder
+      : body.role === "CARETAKER"
+        ? DEMO_MEMBERS.caretaker
+        : DEMO_MEMBERS[body.member ?? "riya"];
   const db = await getDb();
   const member = await db.get<Member>(C.members(DEMO_CIRCLE_ID), id);
   if (!member || !member.active) throw fail.conflict("This demo member was revoked. Reset the demo to start again.");

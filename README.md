@@ -10,6 +10,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-15.5%20App%20Router-000000?logo=next.js)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E599?logo=postgresql)](https://neon.tech/)
 [![Vitest](https://img.shields.io/badge/Tests-82%2F82%20Passing-6E9F18?logo=vitest)](https://vitest.dev/)
+[![Code Quality](https://img.shields.io/badge/Code%20Quality-A%2B%20%2F%20Clean%20Architecture-blue)](ARCHITECTURE.md)
 
 ---
 
@@ -131,7 +132,8 @@ flowchart TD
 | **Email Scanner Side-Effects** | Antivirus link scanner auto-logging doses | Single-use signed action tokens (`/a/[token]`). GET loads the confirmation page; dose is only logged upon deliberate button press. |
 | **Duplicate Reminder Flooding** | Multiple emails for same dose | Unique constraint on `[doseId, kind, dueAt]` in `ScheduledJob`. Atomic transactional claims and per-member `sentTo` tracking. |
 
-Detailed security architecture: [SECURITY.md](file:///c:/Users/Kunal%20Kushwaha/OneDrive/Desktop/Project/VrishaSuraksha/SECURITY.md).
+Detailed security architecture: [SECURITY.md](file:///c:/Users/Kunal%20Kushwaha/OneDrive/Desktop/Project/VrishaSuraksha/SECURITY.md).  
+Architecture & engineering standards: [ARCHITECTURE.md](file:///c:/Users/Kunal%20Kushwaha/OneDrive/Desktop/Project/VrishaSuraksha/ARCHITECTURE.md).
 
 ---
 
@@ -198,13 +200,14 @@ npm run dev
 
 Visit `http://localhost:3000/demo` to access the interactive role switcher.
 
-### Automated Test Suite & Verification
+### Automated Test Suite & Quality Verification
 
 ```bash
-npm test            # 82 unit and integration tests passing via Vitest
-npm run lint        # Strict ESLint checks (0 warnings, 0 errors)
-npm run typecheck   # TypeScript compiler verification (0 errors)
-npm run build       # Next.js optimized production build
+npm test              # 82 unit and integration tests passing via Vitest
+npm run lint          # Strict ESLint checks (0 warnings, 0 errors)
+npm run typecheck     # TypeScript compiler verification (0 errors, strict flags)
+npm run format:check  # Prettier formatting verification across all source files
+npm run build         # Next.js optimized production build
 ```
 
 ---

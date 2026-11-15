@@ -42,7 +42,10 @@ export function normalizeName(name: string): string {
 }
 
 function normalizeDose(dose: string): string {
-  return dose.toLowerCase().replace(/\s+/g, "").replace(/milligrams?/g, "mg");
+  return dose
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/milligrams?/g, "mg");
 }
 
 /**
