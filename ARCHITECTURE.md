@@ -122,7 +122,7 @@ Every code change must pass four sequential verification gates:
 
 ```bash
 # Gate 1: Unit & Integration Test Suite
-npm test            # 133 automated Vitest specs across 18 test suites
+npm test            # 143 automated Vitest specs across 23 test suites (~80% line coverage)
 
 # Gate 2: Static Analysis & Accessibility Linting
 npm run lint        # ESLint with next/core-web-vitals & jsx-a11y/strict

@@ -9,7 +9,8 @@
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-3%20Flash%20Preview-4285F4?logo=google)](https://deepmind.google/technologies/gemini/)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5%20App%20Router-000000?logo=next.js)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E599?logo=postgresql)](https://neon.tech/)
-[![Vitest](https://img.shields.io/badge/Tests-133%2F133%20Passing-6E9F18?logo=vitest)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-143%2F143%20Passing-6E9F18?logo=vitest)](https://vitest.dev/)
+[![Coverage](https://img.shields.io/badge/Coverage-80%25%20Lines-brightgreen)](tests/)
 [![Code Quality](https://img.shields.io/badge/Code%20Quality-A%2B%20%2F%20Clean%20Architecture-blue)](ARCHITECTURE.md)
 
 ---
@@ -203,7 +204,8 @@ Visit `http://localhost:3000/demo` to access the interactive role switcher.
 ### Automated Test Suite & Quality Verification
 
 ```bash
-npm test              # 133 unit and integration tests passing via Vitest across 18 test suites
+npm test              # 143 unit and integration tests passing via Vitest across 23 test suites
+npm run coverage      # ~80% statement & line coverage across business domain and services
 npm run lint          # Strict ESLint checks (0 warnings, 0 errors)
 npm run typecheck     # TypeScript compiler verification (0 errors, strict flags)
 npm run format:check  # Prettier formatting verification across all source files
