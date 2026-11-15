@@ -4,7 +4,7 @@
 
 > Built for PromptWars x Catalyst: *Elderly Care & Medication Management Platform*.
 
-**Live demo:** `https://<your-cloud-run-url>/demo`. Pick any role; the demo circle is reset on request.
+**Live demo:** `https://<your-app-url>/demo`. Pick any role; the demo circle is reset on request.
 
 ---
 
@@ -35,7 +35,7 @@
 
 | Service | Use |
 |---|---|
-| **Cloud Run** | Hosts the Next.js app (standalone build, non-root container). |
+| **Cloud Run** | Hosts the Next.js app (standalone build, non-root container). Vercel and Render are also supported. |
 | **Firestore** | All data. Transactions guarantee a reminder is sent exactly once. |
 | **Gemini API** (`gemini-3-flash-preview`) | Prescription scanning, medicine explanations, doctor-brief summary. Output is JSON validated with Zod. |
 | **Cloud Text-to-Speech** | Hindi and English read-aloud for the elder. The browser's voice is the fallback. |
@@ -112,6 +112,40 @@ bash scripts/deploy.sh
 ```
 
 The script enables the APIs, creates Firestore with its indexes, a least-privilege service account, the secrets, the Cloud Run service and the Cloud Scheduler job. It is safe to re-run.
+
+## Host on Vercel or Render
+
+Both use the same Firestore database through Firebase's free Spark plan, which needs no card.
+
+**1. Firestore (Firebase console)**
+1. At [console.firebase.google.com](https://console.firebase.google.com), create a project and open **Build → Firestore Database → Create database** (production mode, region `asia-south1`).
+2. Under **Indexes → Composite → Create index**, add two indexes on collection `jobs`: `status` ↑ + `dueAt` ↑, and `status` ↑ + `leaseUntil` ↑.
+3. Under **Project settings → Service accounts → Generate new private key**, download the JSON key. Keep it out of the repo; it goes into `GOOGLE_CREDENTIALS`.
+
+**2. Environment variables**
+
+| Variable | Value |
+|---|---|
+| `DATA_BACKEND` | `firestore` |
+| `GOOGLE_CREDENTIALS` | the whole service-account JSON |
+| `ENCRYPTION_KEY` | `openssl rand -base64 32`, **the same on every host** |
+| `JWT_SECRET` | `openssl rand -base64 48` |
+| `CRON_SECRET` | `openssl rand -hex 32` |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | your key, `gemini-3-flash-preview` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | Gmail App Password settings (Vercel only, see below) |
+| `DEMO_MODE`, `DEMO_INBOX` | `true`, your Gmail address |
+
+`APP_URL` is optional: the app reads the address Vercel or Render publishes.
+
+**3. Deploy**
+- **Vercel:** *Add New → Project*, import the repo, paste the variables, deploy. No other settings are needed.
+- **Render:** *New → Blueprint*, pick the repo. [`render.yaml`](render.yaml) builds the Dockerfile on the free plan and asks for the secret values.
+
+**4. Reminders.** Free plans on both hosts cannot run a job every minute, so use [cron-job.org](https://cron-job.org) (free):
+- URL `https://<your-vercel-app>/api/cron/tick`, every minute, method POST, header `Authorization: Bearer <CRON_SECRET>`.
+- Optional: a second job calling `https://<your-render-app>/api/health` every 10 minutes keeps the free Render instance from sleeping.
+
+Render's free plan blocks outgoing email ports, so let Vercel run the reminder engine and send email. Both hosts share the database, and jobs are claimed in transactions, so a reminder is never sent twice. Cloud Text-to-Speech needs Google Cloud billing; without it the elder's phone voice is used.
 
 ## Project layout
 

@@ -1,0 +1,28 @@
+# Render Blueprint: New > Blueprint > pick this repo. Render builds the Dockerfile.
+# Values marked "sync: false" are asked for in the Render dashboard; never commit them.
+services:
+  - type: web
+    name: vridhasuraksha
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DATA_BACKEND
+        value: firestore
+      - key: DEMO_MODE
+        value: "true"
+      - key: GEMINI_MODEL
+        value: gemini-3-flash-preview
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+      # Must be the same value on every host that shares the Firestore database.
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CREDENTIALS
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
